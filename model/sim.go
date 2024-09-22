@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"simctl/db"
 	"time"
+
+	. "xorm.io/builder"
 )
 
 type Sim struct {
@@ -49,22 +51,23 @@ func (s *Sim) PreSaleMeals() []*SaleMeal {
 	var oneIds []int64
 	db.Engine.Table("meal").Where("group_id = ? AND once IS TRUE", s.GroupId).Cols("id").Find(&oneIds)
 	var mIds []int64
-	db.Engine.Table("order").Where("sim_id = ? AND meal_id in ? AND status = 1", s.Id, oneIds).Cols("meal_id").Find(&mIds)
+	db.Engine.Table("order").Where(Eq{"sim_id": s.Id, "status": 1}.And(In("meal_id", oneIds))).Cols("meal_id").Find(&mIds)
 	saleMeals := make([]*SaleMeal, 0, 15)
 	if s.AgentId > 0 {
-		sql := "select m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once from meal as m left join agent_meal as am on m.id=am.meal_id where m.group_id = ? and am.agent_id = ? and m.id not in ?"
-		if err := db.Engine.SQL(sql, s.GroupId, s.AgentId, mIds).Find(&saleMeals); err != nil {
+		sql := Select("m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once")
+		sql.From("meal as m").LeftJoin("agent_meal as am", "m.id=am.meal_id").Where(Eq{"m.group_id": s.GroupId, "am.agent_id": s.AgentId}.And(NotIn("m.id", mIds)))
+		if err := db.Engine.SQL(sql).Find(&saleMeals); err != nil {
 			fmt.Println(err.Error())
 		}
 	} else {
-		sql := "select id as meal_id,title,base,across_month,price,once from meal where group_id = ? AND id not in ?"
-		db.Engine.SQL(sql, s.GroupId, mIds).Find(&saleMeals)
+		sql := Select("id as meal_id,title,base,across_month,price,once").From("meal").Where(Eq{"group_id": s.GroupId}.And(NotIn("id", mIds)))
+		db.Engine.SQL(sql).Find(&saleMeals)
 	}
 	baseExpiredAt := s.GetBaseExpired()
 	for _, saleMeal := range saleMeals {
-		if saleMeal.AcrossMonth && saleMeal.Base && (baseExpiredAt == nil || baseExpiredAt.Before(time.Now())) {
+		if !saleMeal.AcrossMonth && saleMeal.Base && (baseExpiredAt == nil || baseExpiredAt.Before(time.Now())) {
 			saleMeal.AcMthAble = true
-		} else if saleMeal.AcrossMonth {
+		} else if !saleMeal.AcrossMonth {
 			saleMeal.AcMthAble = true
 		}
 	}

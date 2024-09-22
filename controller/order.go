@@ -70,6 +70,7 @@ func (b *Buy) OnInit(bMsg []byte) {
 	json.Unmarshal(bMsg, &iMsg)
 	sim := new(model.Sim)
 	db.Engine.ID(iMsg.SimId).Get(sim)
+	b.order = new(model.Order)
 	b.order.SimId = sim.Id
 	b.order.Sim = sim
 	b.order.AgentId = sim.AgentId
