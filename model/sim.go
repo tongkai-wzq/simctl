@@ -5,7 +5,7 @@ import (
 	"simctl/db"
 	"time"
 
-	. "xorm.io/builder"
+	"xorm.io/builder"
 )
 
 type Sim struct {
@@ -51,16 +51,16 @@ func (s *Sim) PreSaleMeals() []*SaleMeal {
 	var oneIds []int64
 	db.Engine.Table("meal").Where("group_id = ? AND once IS TRUE", s.GroupId).Cols("id").Find(&oneIds)
 	var mIds []int64
-	db.Engine.Table("order").Where(Eq{"sim_id": s.Id, "status": 1}.And(In("meal_id", oneIds))).Cols("meal_id").Find(&mIds)
+	db.Engine.Table("order").Where(builder.Eq{"sim_id": s.Id, "status": 1}.And(builder.In("meal_id", oneIds))).Cols("meal_id").Find(&mIds)
 	saleMeals := make([]*SaleMeal, 0, 15)
 	if s.AgentId > 0 {
-		sql := Select("m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once")
-		sql.From("meal as m").LeftJoin("agent_meal as am", "m.id=am.meal_id").Where(Eq{"m.group_id": s.GroupId, "am.agent_id": s.AgentId}.And(NotIn("m.id", mIds)))
+		sql := builder.Select("m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once")
+		sql.From("meal as m").LeftJoin("agent_meal as am", "m.id=am.meal_id").Where(builder.Eq{"m.group_id": s.GroupId, "am.agent_id": s.AgentId}.And(builder.NotIn("m.id", mIds)))
 		if err := db.Engine.SQL(sql).Find(&saleMeals); err != nil {
 			fmt.Println(err.Error())
 		}
 	} else {
-		sql := Select("id as meal_id,title,base,across_month,price,once").From("meal").Where(Eq{"group_id": s.GroupId}.And(NotIn("id", mIds)))
+		sql := builder.Select("id as meal_id,title,base,across_month,price,once").From("meal").Where(builder.Eq{"group_id": s.GroupId}.And(builder.NotIn("id", mIds)))
 		db.Engine.SQL(sql).Find(&saleMeals)
 	}
 	baseExpiredAt := s.GetBaseExpired()
