@@ -3,12 +3,12 @@ package model
 import "time"
 
 type Group struct {
-	Id   int64
-	Name string
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type Meal struct {
-	Id          int64
+	Id          int64   `json:"id"`
 	GroupId     int64   `json:"groupId"`
 	Group       *Group  `xorm:"-" json:"group"`
 	Title       string  `json:"title"`

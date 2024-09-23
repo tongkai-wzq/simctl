@@ -1,7 +1,7 @@
 package model
 
 type AgentGroup struct {
-	Id      int64
+	Id      int64  `json:"id"`
 	AgentId int64  `json:"agentId"`
 	Agent   *Agent `xorm:"-" json:"agent"`
 	GroupId int64  `json:"groupId"`
@@ -10,7 +10,7 @@ type AgentGroup struct {
 }
 
 type AgentMeal struct {
-	Id       int64
+	Id       int64   `json:"id"`
 	AgentId  int64   `json:"agentId"`
 	Agent    *Agent  `xorm:"-" json:"agent"`
 	MealId   int64   `json:"mealId"`

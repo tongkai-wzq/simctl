@@ -3,7 +3,7 @@ package model
 import "simctl/db"
 
 type Agent struct {
-	Id         int64
+	Id         int64  `json:"id"`
 	Name       string `json:"name"`
 	SuperiorId int64  `json:"superiorId"`
 	Superior   *Agent `json:"superior"`

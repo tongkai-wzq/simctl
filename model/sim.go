@@ -9,7 +9,7 @@ import (
 )
 
 type Sim struct {
-	Id      int64
+	Id      int64  `json:"id"`
 	AgentId int64  `json:"agentId"`
 	Agent   *Agent `xorm:"-" json:"agent"`
 	GroupId int64

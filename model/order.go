@@ -12,7 +12,7 @@ import (
 )
 
 type Order struct {
-	Id        int64
+	Id        int64  `json:"id"`
 	Title     string `json:"title"`
 	AgentId   int64  `json:"agentId"`
 	Agent     *Agent `xorm:"-" json:"agent"`

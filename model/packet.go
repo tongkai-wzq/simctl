@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Packet struct {
-	Id        int64
+	Id        int64 `json:"id"`
 	OrderId   int64
 	Order     *Order `xorm:"-" json:"order"`
 	SimId     int64
