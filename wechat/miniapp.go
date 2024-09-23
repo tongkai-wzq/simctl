@@ -16,7 +16,7 @@ func init() {
 	MiniClient, err = miniProgram.NewMiniProgram(&miniProgram.UserConfig{
 		AppID:     config.AppID,  // 小程序appid
 		Secret:    config.Secret, // 小程序app secret
-		HttpDebug: true,
+		HttpDebug: false,
 	})
 	if err != nil {
 		log.Fatal("load merchant private key error")
