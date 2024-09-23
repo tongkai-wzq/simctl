@@ -93,7 +93,7 @@ func (b *Buy) OnSubmit(bMsg []byte) {
 	b.order.MealId = b.saleMeals[sMsg.MealKey].MealId
 	b.order.LoadMeal()
 	b.order.NextMonth = sMsg.NextMonth
-	b.order.Amount = b.saleMeals[sMsg.MealKey].Price
+	b.order.Price = b.saleMeals[sMsg.MealKey].Price
 	b.packets = b.order.PrePackets()
 	var sResp buySubmitResp
 	sResp.Handle = "submit"

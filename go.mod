@@ -6,6 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gorilla/websocket v1.5.3
+	xorm.io/builder v0.3.13
 	xorm.io/xorm v1.3.9
 )
 
@@ -16,5 +17,4 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
-	xorm.io/builder v0.3.13 // indirect
 )

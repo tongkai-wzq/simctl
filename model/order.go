@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"simctl/db"
 )
 
@@ -14,6 +15,7 @@ type Order struct {
 	MealId    int64
 	Meal      *Meal   `xorm:"-" json:"meal"`
 	NextMonth bool    `json:"nextMonth"`
+	Price     float64 `json:"price"`
 	Amount    float64 `json:"amount"`
 	RefundAmt float64 `json:"refundAmt"`
 	Status    int64   `json:"status"`
@@ -43,4 +45,56 @@ func (o *Order) SavePackets(packets []*Packet) {
 		packet.OrderId = o.Id
 	}
 	db.Engine.Insert(&packets)
+}
+
+func (o *Order) GetRbtPca() float64 {
+	return o.Amount / o.Price
+}
+
+func (o *Order) GiveRbt() error {
+	var rebates []*Rebates
+	var agent, subAgent *Agent
+	agent = o.Agent
+	for {
+		var agtMeal, subAgtMeal AgentMeal
+		var amount float64
+		if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", agent.Id, o.MealId).Get(&agtMeal); err != nil || !has {
+			return errors.New("agentMeal no found")
+		}
+		if subAgent == nil {
+			if agtMeal.Price > 0 {
+				amount = (agtMeal.Price - agtMeal.StlPrice) * o.GetRbtPca()
+			} else {
+				amount = (o.Price - agtMeal.StlPrice) * o.GetRbtPca()
+			}
+		} else {
+			if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", subAgent.Id, o.MealId).Get(&subAgtMeal); err != nil || !has {
+				return errors.New("agentMeal no found")
+			}
+			amount = (subAgtMeal.StlPrice - agtMeal.StlPrice) * o.GetRbtPca()
+		}
+		if amount == 0 {
+			continue
+		}
+		rebate := Rebates{
+			Amount: amount,
+			Status: 0,
+		}
+		rebate.AgentId = o.AgentId
+		rebate.Agent = o.Agent
+		rebate.OrderId = o.Id
+		rebate.Order = o
+		rebates = append(rebates, &rebate)
+		if agent.SuperiorId > 0 {
+			agent.LoadSuperior()
+			subAgent = agent
+			agent = agent.Superior
+		} else {
+			break
+		}
+	}
+	for _, rebate := range rebates {
+		db.Engine.Insert(rebate)
+	}
+	return nil
 }
