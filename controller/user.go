@@ -14,7 +14,7 @@ type userLogin struct {
 
 func UserLogin(w http.ResponseWriter, r *http.Request) {
 	var form userLogin
-	render.DecodeJSON(r.Response.Body, &form)
+	render.DecodeJSON(r.Body, &form)
 	if resp, err := wechat.MiniClient.Auth.Session(context.Background(), form.Code); err == nil {
 		render.JSON(w, r, resp)
 	} else {
