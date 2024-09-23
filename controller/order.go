@@ -1,13 +1,19 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
+	"simctl/config"
 	"simctl/db"
 	"simctl/model"
+	"simctl/wechat"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )
 
 func NewBuy(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +117,29 @@ func (b *Buy) OnSubmit(bMsg []byte) {
 }
 
 func (b *Buy) OnUnify(bMsg []byte) {
+	svc := jsapi.JsapiApiService{Client: wechat.PayClient}
+	resp, result, err := svc.PrepayWithRequestPayment(context.Background(),
+		jsapi.PrepayRequest{
+			Appid:       core.String(config.AppID),
+			Mchid:       core.String(config.MchID),
+			Description: core.String("Image形象店-深圳腾大-QQ公仔"),
+			OutTradeNo:  core.String("1217752501201407033233368018"),
+			Attach:      core.String("自定义数据说明"),
+			NotifyUrl:   core.String("https://www.weixin.qq.com/wxpay/pay.php"),
+			Amount: &jsapi.Amount{
+				Total: core.Int64(100),
+			},
+			Payer: &jsapi.Payer{
+				Openid: core.String("oUpF8uMuAJO_M2pxb1Q9zNjWeS6o"),
+			},
+		},
+	)
 
+	if err == nil {
+		log.Println(resp, result)
+	} else {
+		log.Println(err)
+	}
 }
 
 func (b *Buy) Pay() {

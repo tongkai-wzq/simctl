@@ -19,6 +19,6 @@ func init() {
 		HttpDebug: false,
 	})
 	if err != nil {
-		log.Fatal("load merchant private key error")
+		log.Fatal("MiniClient error")
 	}
 }
