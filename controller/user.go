@@ -23,10 +23,13 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 			user.Openid = resp.OpenID
 			user.SessionKey = resp.SessionKey
 			db.Engine.Insert(&user)
+		} else if err == nil {
+			user.SessionKey = resp.SessionKey
+			db.Engine.Cols("session_key").Update(&user)
 		}
 		_, token, _ := TokenAuth.Encode(map[string]any{"userType": "user", "userId": user.Id})
-		render.JSON(w, r, map[string]string{"token": token})
-	} else {
-		render.JSON(w, r, map[string]string{"code": "4001"})
+		render.JSON(w, r, map[string]any{"code": 0, "token": token})
+	} else if err == nil {
+		render.JSON(w, r, map[string]any{"code": 4001, "msg": resp.ErrMsg})
 	}
 }

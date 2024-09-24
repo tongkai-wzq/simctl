@@ -23,6 +23,8 @@ func init() {
 }
 
 type message struct {
+	Code   int64  `json:"code"`
+	Msg    string `json:"msg"`
 	Handle string `json:"handle"`
 }
 
