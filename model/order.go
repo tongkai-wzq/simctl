@@ -18,6 +18,8 @@ type Order struct {
 	Agent     *Agent `xorm:"-" json:"agent"`
 	SimId     int64
 	Sim       *Sim `xorm:"-" json:"sim"`
+	UserId    int64
+	User      *User `xorm:"-" json:"user"`
 	MealId    int64
 	Meal      *Meal   `xorm:"-" json:"meal"`
 	NextMonth bool    `json:"nextMonth"`

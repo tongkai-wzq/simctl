@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"simctl/config"
@@ -19,14 +18,15 @@ import (
 )
 
 func NewBuy(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	var user model.User
+	if has, err := db.Engine.ID(int64(claims["userId"].(float64))).Get(&user); err != nil || !has {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 	if conn, err := upgrader.Upgrade(w, r, nil); err == nil {
 		var buy Buy
 		buy.Conn = conn
-		_, claims, _ := jwtauth.FromContext(r.Context())
-		var user model.User
-		if has, err := db.Engine.ID(claims["userId"]).Get(&user); err != nil || !has {
-			fmt.Println("no found user")
-		}
 		buy.user = &user
 		buy.Run(buy.GetHandleMap())
 	} else {
@@ -90,6 +90,8 @@ func (b *Buy) OnInit(bMsg []byte) {
 	b.order.Sim = sim
 	b.order.AgentId = sim.AgentId
 	b.order.LoadAgent()
+	b.order.UserId = b.user.Id
+	b.order.User = b.user
 	var iResp buyInitResp
 	iResp.Iccid = sim.Iccid
 	iResp.Msisdn = sim.Msisdn
