@@ -85,13 +85,14 @@ func (b *Buy) OnInit(bMsg []byte) {
 	json.Unmarshal(bMsg, &iMsg)
 	sim := new(model.Sim)
 	db.Engine.ID(iMsg.SimId).Get(sim)
-	b.order = new(model.Order)
-	b.order.SimId = sim.Id
-	b.order.Sim = sim
-	b.order.AgentId = sim.AgentId
+	b.order = &model.Order{
+		UserId:  b.user.Id,
+		User:    b.user,
+		SimId:   sim.Id,
+		Sim:     sim,
+		AgentId: sim.AgentId,
+	}
 	b.order.LoadAgent()
-	b.order.UserId = b.user.Id
-	b.order.User = b.user
 	var iResp buyInitResp
 	iResp.Iccid = sim.Iccid
 	iResp.Msisdn = sim.Msisdn
