@@ -10,21 +10,17 @@ import (
 )
 
 func Reg() *chi.Mux {
-
 	route := chi.NewRouter()
 	route.Use(middleware.Logger)
 	route.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"*"},
 	}))
 	route.Get("/meals", controller.Meals)
-	route.Get("/buy", controller.NewBuy)
 	route.Post("/userLogin", controller.UserLogin)
-
 	route.Group(func(route chi.Router) {
 		route.Use(jwtauth.Verifier(controller.TokenAuth))
 		route.Use(jwtauth.Authenticator(controller.TokenAuth))
-
+		route.Get("/buy", controller.NewBuy)
 	})
-
 	return route
 }
