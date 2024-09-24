@@ -24,7 +24,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 			user.SessionKey = resp.SessionKey
 			db.Engine.Insert(&user)
 		}
-		_, token, _ := TokenAuth.Encode(map[string]interface{}{"userType": "user", "userId": user.Id})
+		_, token, _ := TokenAuth.Encode(map[string]any{"userType": "user", "userId": user.Id})
 		render.JSON(w, r, map[string]string{"token": token})
 	} else {
 		render.JSON(w, r, map[string]string{"code": "4001"})

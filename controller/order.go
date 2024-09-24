@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"simctl/config"
@@ -11,6 +12,7 @@ import (
 	"simctl/wechat"
 	"time"
 
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/gorilla/websocket"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
@@ -20,6 +22,12 @@ func NewBuy(w http.ResponseWriter, r *http.Request) {
 	if conn, err := upgrader.Upgrade(w, r, nil); err == nil {
 		var buy Buy
 		buy.Conn = conn
+		_, claims, _ := jwtauth.FromContext(r.Context())
+		var user model.User
+		if has, err := db.Engine.ID(claims["userId"]).Get(&user); err != nil || !has {
+			fmt.Println("no found user")
+		}
+		buy.user = &user
 		buy.Run(buy.GetHandleMap())
 	} else {
 		println(err.Error())
@@ -59,6 +67,7 @@ type buySubmitResp struct {
 
 type Buy struct {
 	widget
+	user      *model.User
 	saleMeals []*model.SaleMeal
 	order     *model.Order
 	packets   []*model.Packet
