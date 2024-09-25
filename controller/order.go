@@ -199,5 +199,6 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 	b.order.Status = 1
 	db.Engine.Insert(b.order)
 	b.order.SavePackets(b.packets)
+	b.order.GiveRbt()
 	w.Write(nil)
 }
