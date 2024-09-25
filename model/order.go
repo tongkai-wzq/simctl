@@ -12,21 +12,22 @@ import (
 )
 
 type Order struct {
-	Id        int64  `json:"id"`
-	Title     string `json:"title"`
-	AgentId   int64  `json:"agentId"`
-	Agent     *Agent `xorm:"-" json:"agent"`
-	SimId     int64
-	Sim       *Sim `xorm:"-" json:"sim"`
-	UserId    int64
-	User      *User `xorm:"-" json:"user"`
-	MealId    int64
-	Meal      *Meal   `xorm:"-" json:"meal"`
-	NextMonth bool    `json:"nextMonth"`
-	Price     float64 `json:"price"`
-	Amount    float64 `json:"amount"`
-	RefundAmt float64 `json:"refundAmt"`
-	Status    int64   `json:"status"`
+	Id         int64  `json:"id"`
+	OutTradeNo string `json:"outTradeNo"`
+	Title      string `json:"title"`
+	AgentId    int64  `json:"agentId"`
+	Agent      *Agent `xorm:"-" json:"agent"`
+	SimId      int64
+	Sim        *Sim `xorm:"-" json:"sim"`
+	UserId     int64
+	User       *User `xorm:"-" json:"user"`
+	MealId     int64
+	Meal       *Meal   `xorm:"-" json:"meal"`
+	NextMonth  bool    `json:"nextMonth"`
+	Price      float64 `json:"price"`
+	Amount     float64 `json:"amount"`
+	RefundAmt  float64 `json:"refundAmt"`
+	Status     int64   `json:"status"`
 }
 
 func (o *Order) LoadAgent() {

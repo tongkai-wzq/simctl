@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"regexp"
 	"simctl/config"
 	"simctl/db"
 	"simctl/model"
@@ -86,12 +88,14 @@ func (b *Buy) OnInit(bMsg []byte) {
 	json.Unmarshal(bMsg, &iMsg)
 	sim := new(model.Sim)
 	db.Engine.ID(iMsg.SimId).Get(sim)
+	now := time.Now()
 	b.order = &model.Order{
-		UserId:  b.user.Id,
-		User:    b.user,
-		SimId:   sim.Id,
-		Sim:     sim,
-		AgentId: sim.AgentId,
+		OutTradeNo: fmt.Sprintf("F%v%v", now.Format("200601021504"), rand.New(rand.NewSource(now.UnixNano())).Intn(9000)+1000),
+		UserId:     b.user.Id,
+		User:       b.user,
+		SimId:      sim.Id,
+		Sim:        sim,
+		AgentId:    sim.AgentId,
 	}
 	b.order.LoadAgent()
 	var iResp buyInitResp
@@ -113,6 +117,7 @@ func (b *Buy) OnSubmit(bMsg []byte) {
 	}
 	b.order.MealId = b.saleMeals[sMsg.MealKey].MealId
 	b.order.LoadMeal()
+	b.order.Title = b.order.Meal.Title
 	b.order.NextMonth = sMsg.NextMonth
 	b.order.Price = b.saleMeals[sMsg.MealKey].Price
 	b.packets = b.order.PrePackets()
@@ -137,15 +142,15 @@ func (b *Buy) OnUnify(bMsg []byte) {
 		jsapi.PrepayRequest{
 			Appid:       core.String(config.AppID),
 			Mchid:       core.String(config.MchID),
-			Description: core.String("Image形象店-深圳腾大-QQ公仔"),
-			OutTradeNo:  core.String("1217752501201407033233368018"),
-			Attach:      core.String("自定义数据说明"),
+			Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
+			OutTradeNo:  core.String(b.order.OutTradeNo),
+			Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
 			NotifyUrl:   core.String("https://www.weixin.qq.com/wxpay/pay.php"),
 			Amount: &jsapi.Amount{
-				Total: core.Int64(100),
+				Total: core.Int64(int64(b.order.Price * 100)),
 			},
 			Payer: &jsapi.Payer{
-				Openid: core.String("oUpF8uMuAJO_M2pxb1Q9zNjWeS6o"),
+				Openid: core.String(b.order.User.Openid),
 			},
 		},
 	)
