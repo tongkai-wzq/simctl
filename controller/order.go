@@ -16,6 +16,8 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/gorilla/websocket"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )
 
@@ -185,5 +187,15 @@ func (b *Buy) Pay() {
 }
 
 func PayNotify(w http.ResponseWriter, r *http.Request) {
+	var handler notify.Handler
+	content := new(payments.Transaction)
+	notifyReq, err := handler.ParseNotifyRequest(context.Background(), r, content)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(notifyReq.Summary)
+	fmt.Println(content)
 
+	buyWidgets[*content.OutTradeNo].Pay()
 }
