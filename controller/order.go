@@ -196,8 +196,8 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b.order.TransactionId = *content.TransactionId
+	b.order.Amount = float64(*content.Amount.PayerTotal) / 100
 	b.order.Status = 1
-	b.order.Amount = float64(*content.Amount.PayerTotal / 100)
 	db.Engine.Insert(b.order)
 	b.order.SavePackets(b.packets)
 	if err := b.order.GiveRbt(); err != nil {

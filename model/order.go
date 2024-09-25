@@ -109,6 +109,7 @@ func (o *Order) GiveRbt() error {
 	}
 	var receivers []profitsharing.CreateOrderReceiver
 	for _, rebate := range rebates {
+		rebate.Status = 1
 		db.Engine.Insert(rebate)
 		receivers = append(receivers, profitsharing.CreateOrderReceiver{
 			Account:     core.String(rebate.Agent.Openid),
@@ -122,7 +123,7 @@ func (o *Order) GiveRbt() error {
 		resp, result, err := svc.CreateOrder(context.Background(),
 			profitsharing.CreateOrderRequest{
 				Appid:           core.String(config.AppID),
-				OutOrderNo:      core.String(o.OutTradeNo),
+				OutOrderNo:      core.String(fmt.Sprintf("%v-S", o.OutTradeNo)),
 				Receivers:       receivers,
 				TransactionId:   core.String(o.TransactionId),
 				UnfreezeUnsplit: core.Bool(true),
