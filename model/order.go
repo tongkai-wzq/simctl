@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"simctl/config"
 	"simctl/db"
 	"simctl/wechat"
 
@@ -13,22 +14,23 @@ import (
 )
 
 type Order struct {
-	Id         int64  `json:"id"`
-	OutTradeNo string `json:"outTradeNo"`
-	Title      string `json:"title"`
-	AgentId    int64  `json:"agentId"`
-	Agent      *Agent `xorm:"-" json:"agent"`
-	SimId      int64
-	Sim        *Sim `xorm:"-" json:"sim"`
-	UserId     int64
-	User       *User `xorm:"-" json:"user"`
-	MealId     int64
-	Meal       *Meal   `xorm:"-" json:"meal"`
-	NextMonth  bool    `json:"nextMonth"`
-	Price      float64 `json:"price"`
-	Amount     float64 `json:"amount"`
-	RefundAmt  float64 `json:"refundAmt"`
-	Status     int64   `json:"status"`
+	Id            int64  `json:"id"`
+	OutTradeNo    string `json:"outTradeNo"`
+	TransactionId string `json:"transactionId"`
+	Title         string `json:"title"`
+	AgentId       int64  `json:"agentId"`
+	Agent         *Agent `xorm:"-" json:"agent"`
+	SimId         int64
+	Sim           *Sim `xorm:"-" json:"sim"`
+	UserId        int64
+	User          *User `xorm:"-" json:"user"`
+	MealId        int64
+	Meal          *Meal   `xorm:"-" json:"meal"`
+	NextMonth     bool    `json:"nextMonth"`
+	Price         float64 `json:"price"`
+	Amount        float64 `json:"amount"`
+	RefundAmt     float64 `json:"refundAmt"`
+	Status        int64   `json:"status"`
 }
 
 func (o *Order) LoadAgent() {
@@ -119,11 +121,9 @@ func (o *Order) GiveRbt() error {
 		svc := profitsharing.OrdersApiService{Client: wechat.PayClient}
 		resp, result, err := svc.CreateOrder(context.Background(),
 			profitsharing.CreateOrderRequest{
-				Appid:           core.String("wx8888888888888888"),
+				Appid:           core.String(config.AppID),
 				OutOrderNo:      core.String(o.OutTradeNo),
 				Receivers:       receivers,
-				SubAppid:        core.String("wx8888888888888889"),
-				SubMchid:        core.String("1900000109"),
 				TransactionId:   core.String("4208450740201411110007820472"),
 				UnfreezeUnsplit: core.Bool(true),
 			},
