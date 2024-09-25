@@ -16,6 +16,7 @@ func Reg() *chi.Mux {
 		AllowedOrigins: []string{"*"},
 	}))
 	route.Get("/meals", controller.Meals)
+	route.Post("/payNotify/{outTradeNo}", controller.PayNotify)
 	route.Post("/userLogin", controller.UserLogin)
 	route.Group(func(route chi.Router) {
 		route.Use(jwtauth.Verifier(controller.TokenAuth))

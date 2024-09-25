@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -37,37 +36,6 @@ func NewBuy(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type buyInitMsg struct {
-	message
-	SimId int64 `json:"simId"`
-}
-
-type buyInitResp struct {
-	message
-	Iccid     string            `json:"iccid"`
-	Msisdn    string            `json:"msisdn"`
-	MapNber   string            `json:"mapNber"`
-	SaleMeals []*model.SaleMeal `json:"saleMeals"`
-}
-
-type buySubmitMsg struct {
-	message
-	MealKey   int64 `json:"mealKey"`
-	NextMonth bool  `json:"nextMonth"`
-}
-
-type buyPacket struct {
-	Base      bool      `json:"base"`
-	StartAt   time.Time `json:"startAt"`
-	ExpiredAt time.Time `json:"expiredAt"`
-	Kb        int64     `json:"Kb"`
-}
-
-type buySubmitResp struct {
-	message
-	Packets []buyPacket `json:"packets"`
-}
-
 type Buy struct {
 	widget
 	user      *model.User
@@ -80,7 +48,21 @@ func (b *Buy) GetHandleMap() map[string]func(bMsg []byte) {
 	return map[string]func(bMsg []byte){
 		"init":   b.OnInit,
 		"submit": b.OnSubmit,
+		"unify":  b.OnUnify,
 	}
+}
+
+type buyInitMsg struct {
+	message
+	SimId int64 `json:"simId"`
+}
+
+type buyInitResp struct {
+	message
+	Iccid     string            `json:"iccid"`
+	Msisdn    string            `json:"msisdn"`
+	MapNber   string            `json:"mapNber"`
+	SaleMeals []*model.SaleMeal `json:"saleMeals"`
 }
 
 func (b *Buy) OnInit(bMsg []byte) {
@@ -110,6 +92,24 @@ func (b *Buy) OnInit(bMsg []byte) {
 	}
 }
 
+type buySubmitMsg struct {
+	message
+	MealKey   int64 `json:"mealKey"`
+	NextMonth bool  `json:"nextMonth"`
+}
+
+type buyPacket struct {
+	Base      bool      `json:"base"`
+	StartAt   time.Time `json:"startAt"`
+	ExpiredAt time.Time `json:"expiredAt"`
+	Kb        int64     `json:"Kb"`
+}
+
+type buySubmitResp struct {
+	message
+	Packets []buyPacket `json:"packets"`
+}
+
 func (b *Buy) OnSubmit(bMsg []byte) {
 	var sMsg buySubmitMsg
 	if err := json.Unmarshal(bMsg, &sMsg); err != nil {
@@ -136,16 +136,21 @@ func (b *Buy) OnSubmit(bMsg []byte) {
 	}
 }
 
+type unifyResp struct {
+	message
+	Data *jsapi.PrepayWithRequestPaymentResponse `json:"data"`
+}
+
 func (b *Buy) OnUnify(bMsg []byte) {
 	svc := jsapi.JsapiApiService{Client: wechat.PayClient}
-	resp, result, err := svc.PrepayWithRequestPayment(context.Background(),
+	resp, _, err := svc.PrepayWithRequestPayment(context.Background(),
 		jsapi.PrepayRequest{
 			Appid:       core.String(config.AppID),
 			Mchid:       core.String(config.MchID),
 			Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
 			OutTradeNo:  core.String(b.order.OutTradeNo),
 			Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
-			NotifyUrl:   core.String("https://www.weixin.qq.com/wxpay/pay.php"),
+			NotifyUrl:   core.String(fmt.Sprintf("https://api.ruiheiot.com/payNotify/%v", b.order.OutTradeNo)),
 			Amount: &jsapi.Amount{
 				Total: core.Int64(int64(b.order.Price * 100)),
 			},
@@ -154,11 +159,16 @@ func (b *Buy) OnUnify(bMsg []byte) {
 			},
 		},
 	)
-
+	var uResp unifyResp
+	uResp.Handle = "unify"
 	if err == nil {
-		log.Println(resp, result)
+		uResp.Data = resp
 	} else {
-		log.Println(err)
+		uResp.Code = 4002
+		uResp.Msg = err.Error()
+	}
+	if data, err := json.Marshal(&uResp); err == nil {
+		b.Conn.WriteMessage(websocket.TextMessage, data)
 	}
 }
 
@@ -166,4 +176,8 @@ func (b *Buy) Pay() {
 	b.order.Status = 1
 	db.Engine.Insert(b.order)
 	b.order.SavePackets(b.packets)
+}
+
+func PayNotify(w http.ResponseWriter, r *http.Request) {
+
 }
