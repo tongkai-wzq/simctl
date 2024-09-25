@@ -183,13 +183,11 @@ func (b *Buy) OnUnify(bMsg []byte) {
 func PayNotify(w http.ResponseWriter, r *http.Request) {
 	var handler notify.Handler
 	content := new(payments.Transaction)
-	notifyReq, err := handler.ParseNotifyRequest(context.Background(), r, content)
+	_, err := handler.ParseNotifyRequest(context.Background(), r, content)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("ParseNotifyRequest", err)
 		return
 	}
-	fmt.Println(notifyReq.Summary)
-	fmt.Println(content)
 	b := buyWidgets[*content.OutTradeNo]
 	if b.order.Status == 1 {
 		w.Write(nil)
