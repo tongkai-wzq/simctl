@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"simctl/config"
@@ -107,7 +108,9 @@ func (b *Buy) OnInit(bMsg []byte) {
 
 func (b *Buy) OnSubmit(bMsg []byte) {
 	var sMsg buySubmitMsg
-	json.Unmarshal(bMsg, &sMsg)
+	if err := json.Unmarshal(bMsg, &sMsg); err != nil {
+		fmt.Println(err.Error())
+	}
 	b.order.MealId = b.saleMeals[sMsg.MealKey].MealId
 	b.order.LoadMeal()
 	b.order.NextMonth = sMsg.NextMonth

@@ -45,8 +45,8 @@ func (m *Meal) RsvBeginAt(baseExpiredAt *time.Time, nextMonth bool) time.Time {
 	}
 }
 
-func (m *Meal) AgtPackets(startAt time.Time) []*Packet {
-	var packets []*Packet
+func (m *Meal) AgtPackets(startAt time.Time) []Packet {
+	var packets []Packet
 	if m.Base {
 		packet := Packet{
 			StartAt: startAt,
@@ -60,7 +60,7 @@ func (m *Meal) AgtPackets(startAt time.Time) []*Packet {
 			} else {
 				packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, true)
 			}
-			packets = append(packets, &packet)
+			packets = append(packets, packet)
 			packet.StartAt = packet.ExpiredAt.Add(time.Second)
 		}
 		return packets
@@ -76,7 +76,7 @@ func (m *Meal) AgtPackets(startAt time.Time) []*Packet {
 		} else {
 			packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, false)
 		}
-		packets = append(packets, &packet)
+		packets = append(packets, packet)
 		return packets
 	}
 }
