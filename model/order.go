@@ -124,7 +124,7 @@ func (o *Order) GiveRbt() error {
 				Appid:           core.String(config.AppID),
 				OutOrderNo:      core.String(o.OutTradeNo),
 				Receivers:       receivers,
-				TransactionId:   core.String("4208450740201411110007820472"),
+				TransactionId:   core.String(o.TransactionId),
 				UnfreezeUnsplit: core.Bool(true),
 			},
 		)
