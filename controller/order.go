@@ -19,6 +19,8 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )
 
+var buyWidgets map[string]*Buy = make(map[string]*Buy)
+
 func NewBuy(w http.ResponseWriter, r *http.Request) {
 	_, claims, _ := jwtauth.FromContext(r.Context())
 	var user model.User
@@ -80,6 +82,7 @@ func (b *Buy) OnInit(bMsg []byte) {
 		AgentId:    sim.AgentId,
 	}
 	b.order.LoadAgent()
+	buyWidgets[b.order.OutTradeNo] = b
 	var iResp buyInitResp
 	iResp.Iccid = sim.Iccid
 	iResp.Msisdn = sim.Msisdn
@@ -150,12 +153,15 @@ func (b *Buy) OnUnify(bMsg []byte) {
 			Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
 			OutTradeNo:  core.String(b.order.OutTradeNo),
 			Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
-			NotifyUrl:   core.String(fmt.Sprintf("https://api.ruiheiot.com/payNotify/%v", b.order.OutTradeNo)),
+			NotifyUrl:   core.String("https://api.ruiheiot.com/payNotify"),
 			Amount: &jsapi.Amount{
 				Total: core.Int64(int64(b.order.Price * 100)),
 			},
 			Payer: &jsapi.Payer{
 				Openid: core.String(b.order.User.Openid),
+			},
+			SettleInfo: &jsapi.SettleInfo{
+				ProfitSharing: core.Bool(true),
 			},
 		},
 	)
