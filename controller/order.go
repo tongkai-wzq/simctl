@@ -181,6 +181,9 @@ func (b *Buy) OnUnify(bMsg []byte) {
 }
 
 func (b *Buy) Pay() {
+	if b.order.Status == 1 {
+		return
+	}
 	b.order.Status = 1
 	db.Engine.Insert(b.order)
 	b.order.SavePackets(b.packets)
@@ -196,6 +199,6 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(notifyReq.Summary)
 	fmt.Println(content)
-
 	buyWidgets[*content.OutTradeNo].Pay()
+	w.Write(nil)
 }

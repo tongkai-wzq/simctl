@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"simctl/db"
 	"simctl/wechat"
@@ -104,25 +105,22 @@ func (o *Order) GiveRbt() error {
 			break
 		}
 	}
+	var receivers []profitsharing.CreateOrderReceiver
 	for _, rebate := range rebates {
 		db.Engine.Insert(rebate)
+		receivers = append(receivers, profitsharing.CreateOrderReceiver{
+			Account:     core.String(rebate.Agent.Openid),
+			Amount:      core.Int64(int64(rebate.Amount * 100)),
+			Description: core.String(fmt.Sprintf("订单%v分佣", rebate.Order.OutTradeNo)),
+			Type:        core.String("PERSONAL_OPENID"),
+		})
 	}
 	go func() {
 		svc := profitsharing.OrdersApiService{Client: wechat.PayClient}
-
-		var receivers []profitsharing.CreateOrderReceiver
-		receivers = append(receivers, profitsharing.CreateOrderReceiver{
-			Account:     core.String("86693852"),
-			Amount:      core.Int64(888),
-			Description: core.String("分给商户A"),
-			Name:        core.String("hu89ohu89ohu89o"),
-			Type:        core.String("MERCHANT_ID"),
-		})
-
 		resp, result, err := svc.CreateOrder(context.Background(),
 			profitsharing.CreateOrderRequest{
 				Appid:           core.String("wx8888888888888888"),
-				OutOrderNo:      core.String("P20150806125346"),
+				OutOrderNo:      core.String(o.OutTradeNo),
 				Receivers:       receivers,
 				SubAppid:        core.String("wx8888888888888889"),
 				SubMchid:        core.String("1900000109"),
@@ -130,7 +128,6 @@ func (o *Order) GiveRbt() error {
 				UnfreezeUnsplit: core.Bool(true),
 			},
 		)
-
 		if err != nil {
 			// 处理错误
 			log.Printf("call CreateOrder err:%s", err)

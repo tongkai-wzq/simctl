@@ -5,6 +5,7 @@ import "simctl/db"
 type Agent struct {
 	Id         int64  `json:"id"`
 	Name       string `json:"name"`
+	Openid     string `json:"openid"`
 	SuperiorId int64  `json:"superiorId"`
 	Superior   *Agent `json:"superior"`
 }
