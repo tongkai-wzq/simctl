@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"simctl/config"
 	"simctl/db"
 	"simctl/wechat"
+	"time"
 
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/profitsharing"
@@ -109,7 +109,6 @@ func (o *Order) GiveRbt() error {
 	}
 	var receivers []profitsharing.CreateOrderReceiver
 	for _, rebate := range rebates {
-		rebate.Status = 1
 		db.Engine.Insert(rebate)
 		receivers = append(receivers, profitsharing.CreateOrderReceiver{
 			Account:     core.String(rebate.Agent.Openid),
@@ -119,8 +118,9 @@ func (o *Order) GiveRbt() error {
 		})
 	}
 	go func() {
+		time.Sleep(15 * time.Second)
 		svc := profitsharing.OrdersApiService{Client: wechat.PayClient}
-		resp, result, err := svc.CreateOrder(context.Background(),
+		_, _, err := svc.CreateOrder(context.Background(),
 			profitsharing.CreateOrderRequest{
 				Appid:           core.String(config.AppID),
 				OutOrderNo:      core.String(fmt.Sprintf("%v-S", o.OutTradeNo)),
@@ -129,12 +129,11 @@ func (o *Order) GiveRbt() error {
 				UnfreezeUnsplit: core.Bool(true),
 			},
 		)
-		if err != nil {
-			// 处理错误
-			log.Printf("call CreateOrder err:%s", err)
-		} else {
-			// 处理返回结果
-			log.Printf("status=%d resp=%s", result.Response.StatusCode, resp)
+		if err == nil {
+			for _, rebate := range rebates {
+				rebate.Status = 1
+				db.Engine.Cols("status").Update(rebate)
+			}
 		}
 	}()
 	return nil
