@@ -87,18 +87,17 @@ func (o *Order) GiveRbt() error {
 			}
 			amount = (subAgtMeal.StlPrice - agtMeal.StlPrice) * o.GetRbtPca()
 		}
-		if amount == 0 {
-			continue
+		if amount > 0 {
+			rebate := Rebates{
+				Amount: amount,
+				Status: 0,
+			}
+			rebate.AgentId = o.AgentId
+			rebate.Agent = o.Agent
+			rebate.OrderId = o.Id
+			rebate.Order = o
+			rebates = append(rebates, &rebate)
 		}
-		rebate := Rebates{
-			Amount: amount,
-			Status: 0,
-		}
-		rebate.AgentId = o.AgentId
-		rebate.Agent = o.Agent
-		rebate.OrderId = o.Id
-		rebate.Order = o
-		rebates = append(rebates, &rebate)
 		if agent.SuperiorId > 0 {
 			agent.LoadSuperior()
 			subAgent = agent
@@ -113,7 +112,7 @@ func (o *Order) GiveRbt() error {
 		receivers = append(receivers, profitsharing.CreateOrderReceiver{
 			Account:     core.String(rebate.Agent.Openid),
 			Amount:      core.Int64(int64(rebate.Amount * 100)),
-			Description: core.String(fmt.Sprintf("订单%v分佣", rebate.Order.OutTradeNo)),
+			Description: core.String(fmt.Sprintf("%v返佣", rebate.Order.OutTradeNo)),
 			Type:        core.String("PERSONAL_OPENID"),
 		})
 	}
