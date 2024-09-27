@@ -156,7 +156,7 @@ func (b *Buy) OnUnify(bMsg []byte) {
 			Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
 			OutTradeNo:  core.String(b.order.OutTradeNo),
 			Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
-			NotifyUrl:   core.String("https://api.ruiheiot.com/payNotify"),
+			NotifyUrl:   core.String(fmt.Sprintf("%v/payNotify", config.Domain)),
 			Amount: &jsapi.Amount{
 				Total: core.Int64(int64(b.order.Price * 100)),
 			},
