@@ -16,8 +16,6 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/gorilla/websocket"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )
@@ -176,9 +174,8 @@ func (b *Buy) OnUnify(bMsg []byte) {
 }
 
 func PayNotify(w http.ResponseWriter, r *http.Request) {
-	handler := notify.NewNotifyHandler(config.MchAPIv3Key, verifiers.NewSHA256WithRSAVerifier(wechat.CertificateVisitor))
 	content := new(payments.Transaction)
-	_, err := handler.ParseNotifyRequest(context.Background(), r, content)
+	_, err := wechat.NotifyHandle.ParseNotifyRequest(context.Background(), r, content)
 	if err != nil {
 		fmt.Println("ParseNotifyRequest", err)
 		w.Write(nil)

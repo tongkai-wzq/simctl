@@ -6,7 +6,9 @@ import (
 	"simctl/config"
 
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/profitsharing"
@@ -16,6 +18,7 @@ import (
 var (
 	PayClient          *core.Client
 	CertificateVisitor core.CertificateVisitor
+	NotifyHandle       *notify.Handler
 )
 
 func init() {
@@ -33,6 +36,7 @@ func init() {
 	}
 	downloader.MgrInstance().RegisterDownloaderWithPrivateKey(ctx, mchPrivateKey, config.MchCertificateSerialNumber, config.MchID, config.MchAPIv3Key)
 	CertificateVisitor = downloader.MgrInstance().GetCertificateVisitor(config.MchID)
+	NotifyHandle = notify.NewNotifyHandler(config.MchAPIv3Key, verifiers.NewSHA256WithRSAVerifier(CertificateVisitor))
 }
 
 func Prepay(prepayRequest jsapi.PrepayRequest) (*jsapi.PrepayWithRequestPaymentResponse, error) {
