@@ -1,10 +1,8 @@
 package model
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"simctl/config"
 	"simctl/db"
 	"simctl/wechat"
 	"time"
@@ -117,16 +115,12 @@ func (o *Order) GiveRbt() error {
 	}
 	go func() {
 		time.Sleep(15 * time.Second)
-		svc := profitsharing.OrdersApiService{Client: wechat.PayClient}
-		_, _, err := svc.CreateOrder(context.Background(),
-			profitsharing.CreateOrderRequest{
-				Appid:           core.String(config.AppID),
-				OutOrderNo:      core.String(fmt.Sprintf("%v-S", o.OutTradeNo)),
-				Receivers:       receivers,
-				TransactionId:   core.String(o.TransactionId),
-				UnfreezeUnsplit: core.Bool(true),
-			},
-		)
+		err := wechat.ProfitSharing(profitsharing.CreateOrderRequest{
+			OutOrderNo:      core.String(fmt.Sprintf("%v-S", o.OutTradeNo)),
+			Receivers:       receivers,
+			TransactionId:   core.String(o.TransactionId),
+			UnfreezeUnsplit: core.Bool(true),
+		})
 		if err == nil {
 			for _, rebate := range rebates {
 				rebate.Status = 1

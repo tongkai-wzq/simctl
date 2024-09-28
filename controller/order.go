@@ -147,26 +147,21 @@ type unifyResp struct {
 }
 
 func (b *Buy) OnUnify(bMsg []byte) {
-	svc := jsapi.JsapiApiService{Client: wechat.PayClient}
-	resp, _, err := svc.PrepayWithRequestPayment(context.Background(),
-		jsapi.PrepayRequest{
-			Appid:       core.String(config.AppID),
-			Mchid:       core.String(config.MchID),
-			Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
-			OutTradeNo:  core.String(b.order.OutTradeNo),
-			Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
-			NotifyUrl:   core.String(fmt.Sprintf("%v/payNotify", config.Domain)),
-			Amount: &jsapi.Amount{
-				Total: core.Int64(int64(b.order.Price * 100)),
-			},
-			Payer: &jsapi.Payer{
-				Openid: core.String(b.order.User.Openid),
-			},
-			SettleInfo: &jsapi.SettleInfo{
-				ProfitSharing: core.Bool(true),
-			},
+	resp, err := wechat.Prepay(jsapi.PrepayRequest{
+		Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
+		OutTradeNo:  core.String(b.order.OutTradeNo),
+		Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
+		NotifyUrl:   core.String(fmt.Sprintf("%v/payNotify", config.Domain)),
+		Amount: &jsapi.Amount{
+			Total: core.Int64(int64(b.order.Price * 100)),
 		},
-	)
+		Payer: &jsapi.Payer{
+			Openid: core.String(b.order.User.Openid),
+		},
+		SettleInfo: &jsapi.SettleInfo{
+			ProfitSharing: core.Bool(true),
+		},
+	})
 	var uResp unifyResp
 	uResp.Handle = "unify"
 	if err == nil {
@@ -203,4 +198,11 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err.Error())
 	}
 	w.Write(nil)
+}
+
+func (b *Buy) Close() {
+	delete(buyWidgets, b.order.OutTradeNo)
+	if b.order.Status == 0 {
+		wechat.CloseOrder(b.order.OutTradeNo)
+	}
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/profitsharing"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 )
 
@@ -31,4 +33,28 @@ func init() {
 	}
 	downloader.MgrInstance().RegisterDownloaderWithPrivateKey(ctx, mchPrivateKey, config.MchCertificateSerialNumber, config.MchID, config.MchAPIv3Key)
 	CertificateVisitor = downloader.MgrInstance().GetCertificateVisitor(config.MchID)
+}
+
+func Prepay(prepayRequest jsapi.PrepayRequest) (*jsapi.PrepayWithRequestPaymentResponse, error) {
+	svc := jsapi.JsapiApiService{Client: PayClient}
+	prepayRequest.Appid = core.String(config.AppID)
+	prepayRequest.Mchid = core.String(config.MchID)
+	resp, _, err := svc.PrepayWithRequestPayment(context.Background(), prepayRequest)
+	return resp, err
+}
+
+func CloseOrder(outTradeNo string) error {
+	svc := jsapi.JsapiApiService{Client: PayClient}
+	_, err := svc.CloseOrder(context.Background(), jsapi.CloseOrderRequest{
+		OutTradeNo: &outTradeNo,
+		Mchid:      core.String(config.MchID),
+	})
+	return err
+}
+
+func ProfitSharing(createOrderRequest profitsharing.CreateOrderRequest) error {
+	svc := profitsharing.OrdersApiService{Client: PayClient}
+	createOrderRequest.Appid = core.String(config.AppID)
+	_, _, err := svc.CreateOrder(context.Background(), createOrderRequest)
+	return err
 }
