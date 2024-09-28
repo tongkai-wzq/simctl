@@ -25,12 +25,13 @@ type Order struct {
 	UserId        int64
 	User          *User `xorm:"-" json:"user"`
 	MealId        int64
-	Meal          *Meal   `xorm:"-" json:"meal"`
-	NextMonth     bool    `json:"nextMonth"`
-	Price         float64 `json:"price"`
-	Amount        float64 `json:"amount"`
-	RefundAmt     float64 `json:"refundAmt"`
-	Status        int64   `json:"status"`
+	Meal          *Meal     `xorm:"-" json:"meal"`
+	NextMonth     bool      `json:"nextMonth"`
+	Price         float64   `json:"price"`
+	Amount        float64   `json:"amount"`
+	RefundAmt     float64   `json:"refundAmt"`
+	Packets       []*Packet `xorm:"-"`
+	Status        int64     `json:"status"`
 }
 
 func (o *Order) LoadAgent() {
@@ -45,20 +46,18 @@ func (o *Order) LoadMeal() {
 
 func (o *Order) PrePackets() []*Packet {
 	beginAt := o.Meal.RsvBeginAt(o.Sim.GetBaseExpired(), o.NextMonth)
-	aPackets := o.Meal.AgtPackets(beginAt)
-	var packets []*Packet
-	for _, packet := range aPackets {
+	for _, packet := range o.Meal.AgtPackets(beginAt) {
 		packet.SimId = o.SimId
-		packets = append(packets, &packet)
+		o.Packets = append(o.Packets, &packet)
 	}
-	return packets
+	return o.Packets
 }
 
-func (o *Order) SavePackets(packets []*Packet) {
-	for _, packet := range packets {
+func (o *Order) SavePackets() {
+	for _, packet := range o.Packets {
 		packet.OrderId = o.Id
 	}
-	db.Engine.Insert(&packets)
+	db.Engine.Insert(o.Packets)
 }
 
 func (o *Order) GetRbtPca() float64 {

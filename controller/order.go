@@ -46,7 +46,6 @@ type Buy struct {
 	user      *model.User
 	saleMeals []*model.SaleMeal
 	order     *model.Order
-	packets   []*model.Packet
 }
 
 func (b *Buy) GetHandleMap() map[string]func(bMsg []byte) {
@@ -126,10 +125,10 @@ func (b *Buy) OnSubmit(bMsg []byte) {
 	b.order.Title = b.order.Meal.Title
 	b.order.NextMonth = sMsg.NextMonth
 	b.order.Price = b.saleMeals[sMsg.MealKey].Price
-	b.packets = b.order.PrePackets()
+	b.order.PrePackets()
 	var sResp buySubmitResp
 	sResp.Handle = "submit"
-	for _, packet := range b.packets {
+	for _, packet := range b.order.Packets {
 		sResp.Packets = append(sResp.Packets, buyPacket{
 			Base:      packet.Base,
 			StartAt:   packet.StartAt,
@@ -199,7 +198,7 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 	b.order.Amount = float64(*content.Amount.PayerTotal) / 100
 	b.order.Status = 1
 	db.Engine.Insert(b.order)
-	b.order.SavePackets(b.packets)
+	b.order.SavePackets()
 	if err := b.order.GiveRbt(); err != nil {
 		fmt.Println(err.Error())
 	}
