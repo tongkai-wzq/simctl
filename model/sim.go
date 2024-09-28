@@ -55,7 +55,8 @@ func (s *Sim) PreSaleMeals() []*SaleMeal {
 	saleMeals := make([]*SaleMeal, 0, 15)
 	if s.AgentId > 0 {
 		sql := builder.Select("m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once")
-		sql.From("meal as m").LeftJoin("agent_meal as am", "m.id=am.meal_id").Where(builder.Eq{"m.group_id": s.GroupId, "am.agent_id": s.AgentId}.And(builder.NotIn("m.id", mIds)))
+		sql.From("meal as m").InnerJoin("agent_group as ag", "m.group_id=ag.group_id").InnerJoin("agent_meal as am", "m.id=am.meal_id")
+		sql.Where(builder.Eq{"ag.group_id": s.GroupId, "ag.rebates": true, "am.agent_id": s.AgentId}.And(builder.NotIn("m.id", mIds)))
 		if err := db.Engine.SQL(sql).Find(&saleMeals); err != nil {
 			fmt.Println(err.Error())
 		}
