@@ -29,8 +29,8 @@ func (s *Sim) GetBaseExpired() *time.Time {
 		expiredAt time.Time
 		packet    Packet
 	)
-	sql := "select * from packet where sim_id = ? AND base IS TRUE AND invalid IS FALSE order by expired_at desc"
-	if has, err := db.Engine.SQL(sql, s.Id).Get(&packet); err == nil && has {
+	cond := builder.Eq{"sim_id": s.Id, "base": true, "invalid": false}
+	if has, err := db.Engine.Where(cond).OrderBy("expired_at desc").Limit(1).Get(&packet); err == nil && has {
 		expiredAt = packet.ExpiredAt
 		return &expiredAt
 	}
@@ -49,13 +49,15 @@ type SaleMeal struct {
 
 func (s *Sim) PreSaleMeals() []*SaleMeal {
 	var oneIds []int64
-	db.Engine.Table("meal").Where("group_id = ? AND once IS TRUE", s.GroupId).Cols("id").Find(&oneIds)
+	cond1 := builder.Eq{"group_id": s.GroupId, "once": true}
+	db.Engine.Table("meal").Where(cond1).Cols("id").Find(&oneIds)
 	var mIds []int64
-	db.Engine.Table("order").Where(builder.Eq{"sim_id": s.Id, "status": 1}.And(builder.In("meal_id", oneIds))).Cols("meal_id").Find(&mIds)
+	cond2 := builder.Eq{"sim_id": s.Id, "status": 1}.And(builder.In("meal_id", oneIds))
+	db.Engine.Table("order").Where(cond2).Cols("meal_id").Find(&mIds)
 	saleMeals := make([]*SaleMeal, 0, 15)
 	if s.AgentId > 0 {
-		sql := builder.Select("m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once")
-		sql.From("meal as m").InnerJoin("agent_group as ag", "m.group_id=ag.group_id").InnerJoin("agent_meal as am", "m.id=am.meal_id")
+		sql := builder.Select("m.id as meal_id,m.title,m.base,m.across_month,if(am.price>0,am.price,m.price) as price,m.once").From("meal as m")
+		sql.InnerJoin("agent_group as ag", "m.group_id=ag.group_id").InnerJoin("agent_meal as am", "m.id=am.meal_id")
 		sql.Where(builder.Eq{"ag.group_id": s.GroupId, "ag.rebates": true, "am.agent_id": s.AgentId}.And(builder.NotIn("m.id", mIds)))
 		if err := db.Engine.SQL(sql).Find(&saleMeals); err != nil {
 			fmt.Println(err.Error())
