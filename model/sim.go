@@ -1,7 +1,7 @@
 package model
 
 import (
-	"fmt"
+	"log"
 	"simctl/db"
 	"time"
 
@@ -60,7 +60,7 @@ func (s *Sim) PreSaleMeals() []*SaleMeal {
 		sql.InnerJoin("agent_group as ag", "m.group_id=ag.group_id").InnerJoin("agent_meal as am", "m.id=am.meal_id")
 		sql.Where(builder.Eq{"ag.group_id": s.GroupId, "ag.rebates": true, "am.agent_id": s.AgentId}.And(builder.NotIn("m.id", mIds)))
 		if err := db.Engine.SQL(sql).Find(&saleMeals); err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		}
 	} else {
 		sql := builder.Select("id as meal_id,title,base,across_month,price,once").From("meal").Where(builder.Eq{"group_id": s.GroupId}.And(builder.NotIn("id", mIds)))

@@ -2,7 +2,7 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"simctl/db"
 	"simctl/model"
@@ -55,7 +55,7 @@ func (w *widget) Run(cc Widgeter) {
 	for {
 		msgType, bMsg, err := w.Conn.ReadMessage()
 		if err != nil {
-			fmt.Println("err msg", err, msgType)
+			log.Println("err msg", err, msgType)
 			break
 		}
 		var msg message
@@ -78,7 +78,7 @@ func (w *widget) keep(cc Widgeter) {
 	w.Conn.SetCloseHandler(func(code int, text string) error {
 		cc.Close()
 		w.Conn.Close()
-		fmt.Println("close handle", code, text)
+		log.Println("close handle", code, text)
 		return nil
 	})
 	for {

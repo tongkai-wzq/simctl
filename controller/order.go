@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -114,7 +115,7 @@ type buySubmitResp struct {
 func (b *Buy) OnSubmit(bMsg []byte) {
 	var sMsg buySubmitMsg
 	if err := json.Unmarshal(bMsg, &sMsg); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 	}
 	b.order.MealId = b.saleMeals[sMsg.MealKey].MealId
 	b.order.LoadMeal()
@@ -176,7 +177,7 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 	content := new(payments.Transaction)
 	_, err := wechat.NotifyHandle.ParseNotifyRequest(context.Background(), r, content)
 	if err != nil {
-		fmt.Println("ParseNotifyRequest", err)
+		log.Println("ParseNotifyRequest", err)
 		w.Write(nil)
 		return
 	}
@@ -191,7 +192,7 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 	db.Engine.Insert(b.order)
 	b.order.SavePackets()
 	if err := b.order.GiveRbt(); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 	}
 	w.Write(nil)
 }
