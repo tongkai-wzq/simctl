@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"simctl/db"
 	"simctl/model"
+	"strings"
 	"time"
 
 	"github.com/go-chi/jwtauth/v5"
@@ -55,7 +56,11 @@ func (w *widget) Run(cc Widgeter) {
 	for {
 		msgType, bMsg, err := w.Conn.ReadMessage()
 		if err != nil {
-			log.Println("err msg", err, msgType)
+			log.Println("websocket", err.Error(), msgType)
+			if !strings.Contains(err.Error(), "close") {
+				cc.Close()
+				w.Conn.Close()
+			}
 			break
 		}
 		var msg message
@@ -70,9 +75,9 @@ func (w *widget) Run(cc Widgeter) {
 }
 
 func (w *widget) keep(cc Widgeter) {
-	w.Conn.SetReadDeadline(time.Now().Add(9 * time.Second))
+	w.Conn.SetReadDeadline(time.Now().Add(6 * time.Second))
 	w.Conn.SetPongHandler(func(appData string) error {
-		w.Conn.SetReadDeadline(time.Now().Add(9 * time.Second))
+		w.Conn.SetReadDeadline(time.Now().Add(6 * time.Second))
 		return nil
 	})
 	w.Conn.SetCloseHandler(func(code int, text string) error {

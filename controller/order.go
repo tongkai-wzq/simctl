@@ -198,6 +198,7 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *Buy) Close() {
+	time.Sleep(6 * time.Second)
 	if b.order.Status == 0 && b.prepay != nil {
 		wechat.CloseOrder(b.order.OutTradeNo)
 	}
