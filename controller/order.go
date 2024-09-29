@@ -13,7 +13,6 @@ import (
 	"simctl/wechat"
 	"time"
 
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/gorilla/websocket"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
@@ -23,20 +22,18 @@ import (
 var buyWidgets map[string]*Buy = make(map[string]*Buy)
 
 func NewBuy(w http.ResponseWriter, r *http.Request) {
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	var user model.User
-	if has, err := db.Engine.ID(int64(claims["userId"].(float64))).Get(&user); err != nil || !has {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	user := AuthUser(w, r)
+	if user == nil {
 		return
 	}
-	if conn, err := upgrader.Upgrade(w, r, nil); err == nil {
-		var buy Buy
-		buy.Conn = conn
-		buy.user = &user
-		buy.Run(buy.GetHandleMap())
-	} else {
-		println(err.Error())
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
 	}
+	var buy Buy
+	buy.Conn = conn
+	buy.user = user
+	buy.Run(&buy)
 }
 
 type Buy struct {
@@ -44,6 +41,7 @@ type Buy struct {
 	user      *model.User
 	saleMeals []*model.SaleMeal
 	order     *model.Order
+	prepay    *jsapi.PrepayWithRequestPaymentResponse
 }
 
 func (b *Buy) GetHandleMap() map[string]func(bMsg []byte) {
@@ -163,6 +161,7 @@ func (b *Buy) OnUnify(bMsg []byte) {
 	var uResp unifyResp
 	uResp.Handle = "unify"
 	if err == nil {
+		b.prepay = resp
 		uResp.Data = resp
 	} else {
 		uResp.Code = 4002
@@ -198,8 +197,8 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *Buy) Close() {
-	delete(buyWidgets, b.order.OutTradeNo)
-	if b.order.Status == 0 {
+	if b.order.Status == 0 && b.prepay != nil {
 		wechat.CloseOrder(b.order.OutTradeNo)
 	}
+	delete(buyWidgets, b.order.OutTradeNo)
 }
