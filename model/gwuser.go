@@ -8,36 +8,36 @@ type GatewayUser struct {
 	Operator string            `json:"operator"`
 	GwType   string            `json:"gwType"`
 	Params   map[string]string `xorm:"json" json:"params"`
-	gateway  gateway.GateWayer `xorm:"-" json:"-"`
+	Gateway  gateway.GateWayer `xorm:"-" json:"-"`
 }
 
 func (gu *GatewayUser) GateWay() gateway.GateWayer {
-	if gu.gateway != nil {
-		return gu.gateway
+	if gu.Gateway != nil {
+		return gu.Gateway
 	}
 	switch gu.GwType {
 	case "mobile":
-		gu.gateway = &gateway.Mobile{
+		gu.Gateway = &gateway.Mobile{
 			Appid:    gu.Params["appid"],
 			Password: gu.Params["password"],
 		}
-		gu.gateway.SetGwUserId(gu.Id)
+		gu.Gateway.SetGwUserId(gu.Id)
 	case "unicom":
-		gu.gateway = &gateway.Unicom{
+		gu.Gateway = &gateway.Unicom{
 			AppId:     gu.Params["appId"],
 			AppSecret: gu.Params["appSecret"],
 			OpenId:    gu.Params["openId"],
 		}
-		gu.gateway.SetGwUserId(gu.Id)
+		gu.Gateway.SetGwUserId(gu.Id)
 	case "telecom":
-		gu.gateway = &gateway.Telecom{
+		gu.Gateway = &gateway.Telecom{
 			AppKey:     gu.Params["appKey"],
 			SecretKey:  gu.Params["secretKey"],
 			CustNumber: gu.Params["custNumber"],
 		}
-		gu.gateway.SetGwUserId(gu.Id)
+		gu.Gateway.SetGwUserId(gu.Id)
 	default:
 		return nil
 	}
-	return gu.gateway
+	return gu.Gateway
 }
