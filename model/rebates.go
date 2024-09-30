@@ -8,5 +8,5 @@ type Rebates struct {
 	Order     *Order  `xorm:"-" json:"order"`
 	Amount    float64 `json:"amount"`
 	RefundAmt float64 `json:"refundAmt"`
-	Status    int64   `json:"status"`
+	Status    int8    `json:"status"`
 }

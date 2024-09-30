@@ -13,10 +13,62 @@ type Sim struct {
 	AgentId int64  `json:"agentId"`
 	Agent   *Agent `xorm:"-" json:"agent"`
 	GroupId int64
-	Group   *Group `xorm:"-" json:"group"`
-	Iccid   string `json:"iccid"`
-	Msisdn  string `json:"msisdn"`
-	MapNber string `json:"mapNber"`
+	Group   *Group     `xorm:"-" json:"group"`
+	Iccid   string     `json:"iccid"`
+	Msisdn  string     `json:"msisdn"`
+	MapNber string     `json:"mapNber"`
+	Auth    bool       `json:"auth"`
+	FlowOn  int8       `json:"flowOn"`
+	Status  int8       `json:"status"`
+	SyncAt  *time.Time `json:"syncAt"`
+	MonthKb int64      `json:"monthKb"`
+	MonthAt *time.Time `json:"monthAt"`
+}
+
+func (s *Sim) GetIccid() string {
+	return s.Iccid
+}
+
+func (s *Sim) GetMsisdn() string {
+	return s.Msisdn
+}
+
+func (s *Sim) GetStatus() int8 {
+	return s.Status
+}
+
+func (s *Sim) SetStatus(status int8) {
+	s.Status = status
+}
+
+func (s *Sim) GetAuth() bool {
+	return s.Auth
+}
+
+func (s *Sim) SetAuth(auth bool) {
+	s.Auth = auth
+}
+
+func (s *Sim) GetFlowOn() int8 {
+	return s.FlowOn
+}
+
+func (s *Sim) SetFlowOn(flonOn int8) {
+	s.FlowOn = flonOn
+}
+
+func (s *Sim) GetMonthKb() int64 {
+	return s.MonthKb
+}
+
+func (s *Sim) SetMonthKb(monthKb int64) {
+	s.MonthKb = monthKb
+	now := time.Now()
+	s.MonthAt = &now
+}
+
+func (s *Sim) GetMonthAt() *time.Time {
+	return s.MonthAt
 }
 
 func (s *Sim) LoadAgent() {

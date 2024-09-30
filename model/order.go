@@ -29,7 +29,7 @@ type Order struct {
 	Amount        float64   `json:"amount"`
 	RefundAmt     float64   `json:"refundAmt"`
 	Packets       []*Packet `xorm:"-"`
-	Status        int64     `json:"status"`
+	Status        int8      `json:"status"`
 }
 
 func (o *Order) LoadAgent() {
