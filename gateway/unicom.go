@@ -1,0 +1,153 @@
+package gateway
+
+import (
+	"bytes"
+	"context"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io"
+	"math/rand"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/tjfoc/gmsm/sm3"
+)
+
+const uUrl = "https://gwapi.10646.cn/api"
+
+type uResp struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type Unicom struct {
+	gateway
+	AppId     string
+	AppSecret string
+	OpenId    string
+}
+
+func (u *Unicom) getParams() map[string]any {
+	now := time.Now()
+	msec := strconv.Itoa(now.Nanosecond() / 1000000)
+	r := rand.New(rand.NewSource(now.UnixNano()))
+	transId := now.Format("20060102150405") + msec + strconv.Itoa(r.Intn(900000)+100000)
+	params := map[string]any{
+		"app_id": u.AppId, "timestamp": now.Format("2006-01-02 15:04:05 ") + msec, "trans_id": transId,
+	}
+	var paramsStr string
+	for k, v := range params {
+		paramsStr = fmt.Sprintf("%v%v%v", paramsStr, k, v)
+	}
+	params["token"] = hex.EncodeToString(sm3.Sm3Sum([]byte(paramsStr + u.AppSecret)))
+	return params
+}
+
+func (u *Unicom) post(uri string, data map[string]any, resp any) error {
+	params := u.getParams()
+	data["messageId"] = "gonet"
+	data["openId"] = u.OpenId
+	data["version"] = "1.0"
+	params["data"] = data
+	form, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, uUrl+uri, io.NopCloser(bytes.NewReader(form)))
+	if err != nil {
+		return err
+	}
+	reader, err := u.send(req)
+	if err != nil {
+		return err
+	}
+	if err := json.NewDecoder(reader).Decode(resp); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *Unicom) ChgLfcy(simer Simer, status uint8) error {
+	if err := u.chgAttr(simer, "3", strconv.Itoa(int(status))); err == nil {
+		simer.SetStatus(status)
+		//lib.DB.Model(simer).Update("status", simer.GetStatus())
+	} else {
+		return err
+	}
+	return nil
+}
+
+func (u *Unicom) chgAttr(simer Simer, changeType string, targetValue string) error {
+	data := map[string]any{
+		"asynchronous": "0",
+		"iccid":        simer.GetIccid(),
+		"changeType":   changeType,
+		"targetValue":  targetValue,
+	}
+	var resp struct {
+		uResp
+		Data struct {
+			Iccid      string `json:"iccid"`
+			ResultCode string `json:"resultCode"`
+		} `json:"data"`
+	}
+	if err := u.post("/wsEditTerminal/V1/1Main/vV1.1", data, &resp); err != nil {
+		return fmt.Errorf("request wsEditTerminal err : %w", err)
+	} else if resp.Status != "0000" {
+		return fmt.Errorf("request wsEditTerminal err : %v %v", resp.Status, resp.Message)
+	}
+	return nil
+}
+
+type terminalDetail struct {
+	Iccid                 string `json:"iccid"`
+	MonthToDateUsage      string `json:"monthToDateUsage"`
+	MonthToDateDataUsage  string `json:"monthToDateDataUsage"`
+	MonthToDateVoiceUsage string `json:"monthToDateVoiceUsage"`
+	SimStatus             string `json:"simStatus"`
+	RealNameStatus        string `json:"realNameStatus"`
+	Imei                  string `json:"imei"`
+}
+
+func (u *Unicom) QryDtls(simers []Simer) error {
+	var iccids []string
+	for _, simer := range simers {
+		iccids = append(iccids, simer.GetIccid())
+	}
+	data := map[string]any{
+		"iccids": iccids,
+	}
+	var resp struct {
+		uResp
+		Data struct {
+			Terminals []terminalDetail `json:"terminals"`
+		} `json:"data"`
+	}
+	if err := u.post("/wsGetTerminalDetails/V1/1Main/vV1.1", data, &resp); err != nil {
+		return fmt.Errorf("request wsGetTerminalDetails err : %w", err)
+	} else if resp.Status != "0000" {
+		return fmt.Errorf("request wsGetTerminalDetails err : %v %v", resp.Status, resp.Message)
+	}
+	for _, simer := range simers {
+		for _, terminal := range resp.Data.Terminals {
+			if terminal.Iccid == simer.GetIccid() {
+				if status, err := strconv.Atoi(terminal.SimStatus); err == nil {
+					simer.SetStatus(uint8(status))
+				}
+				if terminal.RealNameStatus == "2" || terminal.RealNameStatus == "3" {
+					simer.SetAuth(true)
+				} else {
+					simer.SetAuth(false)
+				}
+				if monthToDateUsage, err := strconv.ParseFloat(terminal.MonthToDateDataUsage, 64); err == nil {
+					simer.SetMonthFlowKB(uint(monthToDateUsage * 1024))
+				}
+				//lib.DB.Model(simer).Updates(map[string]any{"status": simer.GetStatus(), "auth": simer.GetAuth(), "month_flowkb": simer.GetMonthFlowKB(), "mtflow_at": simer.GetMtFlowAt()})
+				break
+			}
+		}
+	}
+	return nil
+}
