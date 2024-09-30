@@ -38,8 +38,8 @@ type Simer interface {
 }
 
 type GateWayer interface {
-	GetGwUserId() uint
-	SetGwUserId(gwUserId uint)
+	GetGwUserId() int64
+	SetGwUserId(gwUserId int64)
 	ChgLfcy(simer Simer, status uint8) error
 	IsCycleNear(gateway GateWayer) bool
 	IsCurtCycle(gateway GateWayer, at time.Time) bool
@@ -58,14 +58,14 @@ type LitRater interface {
 }
 
 type gateway struct {
-	gwUserId uint
+	gwUserId int64
 }
 
-func (gw *gateway) GetGwUserId() uint {
+func (gw *gateway) GetGwUserId() int64 {
 	return gw.gwUserId
 }
 
-func (gw *gateway) SetGwUserId(gwUserId uint) {
+func (gw *gateway) SetGwUserId(gwUserId int64) {
 	gw.gwUserId = gwUserId
 }
 

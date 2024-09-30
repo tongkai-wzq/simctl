@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"simctl/db"
 	"strconv"
 	"time"
 )
@@ -28,8 +29,7 @@ type Mobile struct {
 func (m *Mobile) getTransid() string {
 	now := time.Now()
 	timeStr := now.Format("20060102150405")
-	r := rand.New(rand.NewSource(now.UnixNano()))
-	transid := m.Appid + timeStr + strconv.Itoa(r.Intn(90000000)+10000000)
+	transid := fmt.Sprintf("%v%v%v", m.Appid, timeStr, strconv.Itoa(rand.New(rand.NewSource(now.UnixNano())).Intn(90000000)+10000000))
 	return transid
 }
 
@@ -97,7 +97,7 @@ func (m *Mobile) QrySts(simer Simer) error {
 	}
 	if status, err := strconv.Atoi(resp.Result[0].CardStatus); err == nil {
 		simer.SetStatus(uint8(status))
-		//lib.DB.Model(simer).Update("status", simer.GetStatus())
+		db.Engine.Cols("status").Update(simer)
 	} else {
 		return fmt.Errorf("parse cardStatus err %w", err)
 	}
@@ -125,7 +125,7 @@ func (m *Mobile) QryAuthSts(simer Simer) error {
 	} else {
 		simer.SetAuth(false)
 	}
-	//lib.DB.Model(simer).Update("auth", simer.GetAuth())
+	db.Engine.Cols("auth").Update(simer)
 	return nil
 }
 
@@ -197,7 +197,7 @@ func (m *Mobile) MtFlow(simer Simer) error {
 	}
 	if flow, err := strconv.ParseFloat(resp.Result[0].DataAmount, 64); err == nil {
 		simer.SetMonthFlowKB(uint(flow))
-		//lib.DB.Model(simer).Updates(map[string]any{"month_flowkb": simer.GetMonthFlowKB(), "mtflow_at": simer.GetMtFlowAt()})
+		db.Engine.Cols("month_flowkb", "mtflow_at").Update(simer)
 	} else {
 		return fmt.Errorf("parse sim-data-usage err %w", err)
 	}
@@ -246,7 +246,7 @@ func (m *Mobile) ChgLfcy(simer Simer, status uint8) error {
 		return fmt.Errorf("request change-sim-status err : %v %v", resp.Status, resp.Message)
 	}
 	simer.SetStatus(status)
-	//lib.DB.Model(simer).Update("status", simer.GetStatus())
+	db.Engine.Cols("status").Update(simer)
 	return nil
 }
 
@@ -272,7 +272,7 @@ func (m *Mobile) SwtFlowOn(simer Simer, flowOn int8) error {
 		return fmt.Errorf("request operate-sim-apn-function err : %v %v", resp.Status, resp.Message)
 	}
 	simer.SetFlowOn(flowOn)
-	//lib.DB.Model(simer).Update("flow_on", simer.GetFlowOn())
+	db.Engine.Cols("flow_on").Update(simer)
 	return nil
 }
 
@@ -297,7 +297,7 @@ func (m *Mobile) SwtVoiceOn(simer Simer, voiceOn int8) error {
 		return fmt.Errorf("request operate-sim-call-function err : %v %v", resp.Status, resp.Message)
 	}
 	simer.SetVoiceOn(voiceOn)
-	//lib.DB.Model(simer).Update("voice_on", simer.GetVoiceOn())
+	db.Engine.Cols("voice_on").Update(simer)
 	return nil
 }
 
@@ -324,6 +324,6 @@ func (m *Mobile) LitRate(simer Simer, MB uint8) error {
 		return fmt.Errorf("request operate-network-speed err : %v %v", resp.Status, resp.Message)
 	}
 	simer.SetRate(data["serviceUsageState"].(int8))
-	//lib.DB.Model(simer).Update("rate", simer.GetRate())
+	db.Engine.Cols("rate").Update(simer)
 	return nil
 }
