@@ -43,6 +43,7 @@ func (o *Order) LoadMeal() {
 }
 
 func (o *Order) PrePackets() []*Packet {
+	o.Packets = nil
 	beginAt := o.Meal.RsvBeginAt(o.Sim.GetBaseExpired(), o.NextMonth)
 	for _, packet := range o.Meal.AgtPackets(beginAt) {
 		packet.SimId = o.SimId
