@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"simctl/db"
 	"strconv"
 	"time"
 
@@ -32,8 +33,7 @@ type Unicom struct {
 func (u *Unicom) getParams() map[string]any {
 	now := time.Now()
 	msec := strconv.Itoa(now.Nanosecond() / 1000000)
-	r := rand.New(rand.NewSource(now.UnixNano()))
-	transId := now.Format("20060102150405") + msec + strconv.Itoa(r.Intn(900000)+100000)
+	transId := fmt.Sprintf("%v%v%v", now.Format("20060102150405"), msec, strconv.Itoa(rand.New(rand.NewSource(now.UnixNano())).Intn(900000)+100000))
 	params := map[string]any{
 		"app_id": u.AppId, "timestamp": now.Format("2006-01-02 15:04:05 ") + msec, "trans_id": transId,
 	}
@@ -69,10 +69,10 @@ func (u *Unicom) post(uri string, data map[string]any, resp any) error {
 	return nil
 }
 
-func (u *Unicom) ChgLfcy(simer Simer, status uint8) error {
+func (u *Unicom) ChgLfcy(simer Simer, status int8) error {
 	if err := u.chgAttr(simer, "3", strconv.Itoa(int(status))); err == nil {
 		simer.SetStatus(status)
-		//lib.DB.Model(simer).Update("status", simer.GetStatus())
+		db.Engine.Cols("status").Update(simer)
 	} else {
 		return err
 	}
@@ -134,7 +134,7 @@ func (u *Unicom) QryDtls(simers []Simer) error {
 		for _, terminal := range resp.Data.Terminals {
 			if terminal.Iccid == simer.GetIccid() {
 				if status, err := strconv.Atoi(terminal.SimStatus); err == nil {
-					simer.SetStatus(uint8(status))
+					simer.SetStatus(int8(status))
 				}
 				if terminal.RealNameStatus == "2" || terminal.RealNameStatus == "3" {
 					simer.SetAuth(true)
@@ -142,9 +142,9 @@ func (u *Unicom) QryDtls(simers []Simer) error {
 					simer.SetAuth(false)
 				}
 				if monthToDateUsage, err := strconv.ParseFloat(terminal.MonthToDateDataUsage, 64); err == nil {
-					simer.SetMonthFlowKB(uint(monthToDateUsage * 1024))
+					simer.SetMonthKb(int64(monthToDateUsage * 1024))
 				}
-				//lib.DB.Model(simer).Updates(map[string]any{"status": simer.GetStatus(), "auth": simer.GetAuth(), "month_flowkb": simer.GetMonthFlowKB(), "mtflow_at": simer.GetMtFlowAt()})
+				db.Engine.Cols("status", "auth", "month_kb").Update(simer)
 				break
 			}
 		}

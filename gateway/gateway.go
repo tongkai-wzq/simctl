@@ -20,41 +20,26 @@ type Simer interface {
 	GetIccid() string
 	GetMsisdn() string
 	GetFlowOn() int8
-	SetFlowOn(flonOn int8)
-	GetVoiceOn() int8
-	SetVoiceOn(voiceOn int8)
-	GetRate() int8
-	SetRate(rate int8)
-	GetStatus() uint8
-	SetStatus(status uint8)
+	SetFlowOn(flowOn int8)
+	GetStatus() int8
+	SetStatus(status int8)
 	GetAuth() bool
 	SetAuth(auth bool)
-	GetMonthFlowKB() uint
-	SetMonthFlowKB(monthFlowKB uint)
-	GetMtFlowAt() *time.Time
-	GetMonthVoiceMi() uint16
-	SetMonthVoiceMi(monthVoiceMi uint16)
-	GetMtVoiceAt() *time.Time
+	GetMonthKb() int64
+	SetMonthKb(monthKb int64)
+	GetMonthAt() *time.Time
 }
 
 type GateWayer interface {
 	GetGwUserId() int64
 	SetGwUserId(gwUserId int64)
-	ChgLfcy(simer Simer, status uint8) error
+	ChgLfcy(simer Simer, status int8) error
 	IsCycleNear(gateway GateWayer) bool
 	IsCurtCycle(gateway GateWayer, at time.Time) bool
 }
 
 type SwtFlowOner interface {
 	SwtFlowOn(simer Simer, flowOn int8) error
-}
-
-type SwtVoiceOner interface {
-	SwtVoiceOn(simer Simer, voiceOn int8) error
-}
-
-type LitRater interface {
-	LitRate(simer Simer, MB uint8) error
 }
 
 type gateway struct {

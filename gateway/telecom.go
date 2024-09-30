@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"simctl/db"
 	"sort"
 	"strconv"
 	"strings"
@@ -106,7 +107,7 @@ func (t *Telecom) QryStsMore(simer Simer) error {
 		return fmt.Errorf("request queryCardMainStatus err : %v %v", resp.Result, resp.ResultMsg)
 	}
 	if status, err := strconv.Atoi(resp.ProductInfo[0].ProductMainStatusCd); err == nil {
-		simer.SetStatus(uint8(status))
+		simer.SetStatus(int8(status))
 	}
 	if resp.AuthStatus == "1" {
 		simer.SetAuth(true)
@@ -118,7 +119,7 @@ func (t *Telecom) QryStsMore(simer Simer) error {
 	} else if resp.NetBlockStatusName == "已断网" {
 		simer.SetFlowOn(0)
 	}
-	//lib.DB.Model(simer).Updates(map[string]any{"status": simer.GetStatus(), "auth": simer.GetAuth(), "flow_on": simer.GetFlowOn()})
+	db.Engine.Cols("status", "auth", "flow_on")
 	return nil
 }
 
@@ -154,7 +155,7 @@ func (t *Telecom) QryAuthStses(simers []Simer) error {
 				} else {
 					simer.SetAuth(false)
 				}
-				//lib.DB.Model(simer).Update("auth", simer.GetAuth())
+				db.Engine.Cols("auth").Update(simer)
 				break
 			}
 		}
@@ -194,8 +195,8 @@ func (t *Telecom) MtFlows(simers []Simer) error {
 		for _, item := range resp.Data {
 			if item.AccessNumber == simer.GetMsisdn() {
 				if flowAmount, err := strconv.ParseFloat(item.FlowAmount, 64); err == nil {
-					simer.SetMonthFlowKB(uint(flowAmount * 1024))
-					//lib.DB.Model(simer).Updates(map[string]any{"month_flowkb": simer.GetMonthFlowKB(), "mtflow_at": simer.GetMtFlowAt()})
+					simer.SetMonthKb(int64(flowAmount * 1024))
+					db.Engine.Cols("month_kb", "month_at").Update(simer)
 				}
 				break
 			}
@@ -204,7 +205,7 @@ func (t *Telecom) MtFlows(simers []Simer) error {
 	return nil
 }
 
-func (t *Telecom) ChgLfcy(simer Simer, status uint8) error {
+func (t *Telecom) ChgLfcy(simer Simer, status int8) error {
 	//lib.DB.Save(simer)
 	return nil
 }
@@ -233,7 +234,7 @@ func (t *Telecom) SwtFlowOn(simer Simer, flowOn int8) error {
 		return fmt.Errorf("request singleCutNet err : %v %v", resp.Response.RspCode, resp.Response.RspDesc)
 	}
 	simer.SetFlowOn(flowOn)
-	//lib.DB.Model(simer).Update("flow_on", simer.GetFlowOn())
+	db.Engine.Cols("flow_on").Update(simer)
 	return nil
 }
 
@@ -260,7 +261,5 @@ func (t *Telecom) LitRate(simer Simer, MB uint8) error {
 	} else if resp.ResultCode != "0000" {
 		return fmt.Errorf("request speedLimitAction err : %v %v", resp.ResultCode, resp.ResultMsg)
 	}
-	simer.SetRate(data["speedValue"].(int8))
-	//lib.DB.Model(simer).Update("rate", simer.GetRate())
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"simctl/db"
@@ -23,7 +24,6 @@ type mResp struct {
 type Mobile struct {
 	gateway
 	Appid, Password string
-	//tokenServ       string
 }
 
 func (m *Mobile) getTransid() string {
@@ -96,7 +96,7 @@ func (m *Mobile) QrySts(simer Simer) error {
 		return fmt.Errorf("request sim-status err : %v %v", resp.Status, resp.Message)
 	}
 	if status, err := strconv.Atoi(resp.Result[0].CardStatus); err == nil {
-		simer.SetStatus(uint8(status))
+		simer.SetStatus(int8(status))
 		db.Engine.Cols("status").Update(simer)
 	} else {
 		return fmt.Errorf("parse cardStatus err %w", err)
@@ -148,16 +148,12 @@ func (m *Mobile) QryCmunt(simer Simer) error {
 		return fmt.Errorf("request sim-communication-function-status err : %v %v", resp.Status, resp.Message)
 	}
 	for _, service := range resp.Result[0].ServiceTypeList {
-		if service.ServiceType == "01" {
-			status, _ := strconv.Atoi(service.ServiceStatus)
-			simer.SetVoiceOn(int8(status))
-		}
 		if service.ServiceType == "11" {
 			status, _ := strconv.Atoi(service.ServiceStatus)
 			simer.SetFlowOn(int8(status))
 		}
 	}
-	//lib.DB.Model(simer).Updates(map[string]any{"flow_on": simer.GetFlowOn(), "voice_on": simer.GetVoiceOn()})
+	db.Engine.Cols("flow_on").Update(simer)
 	return nil
 }
 
@@ -196,8 +192,8 @@ func (m *Mobile) MtFlow(simer Simer) error {
 		return fmt.Errorf("request sim-data-usage err : %v %v", resp.Status, resp.Message)
 	}
 	if flow, err := strconv.ParseFloat(resp.Result[0].DataAmount, 64); err == nil {
-		simer.SetMonthFlowKB(uint(flow))
-		db.Engine.Cols("month_flowkb", "mtflow_at").Update(simer)
+		simer.SetMonthKb(int64(flow))
+		db.Engine.Cols("month_kb", "month_at").Update(simer)
 	} else {
 		return fmt.Errorf("parse sim-data-usage err %w", err)
 	}
@@ -220,8 +216,7 @@ func (m *Mobile) MtVoice(simer Simer) error {
 		return fmt.Errorf("request sim-voice-usage err : %v %v", resp.Status, resp.Message)
 	}
 	if voice, err := strconv.ParseFloat(resp.Result[0].VoiceAmount, 64); err == nil {
-		simer.SetMonthVoiceMi(uint16(voice))
-		//lib.DB.Model(simer).Updates(map[string]any{"month_voicemi": simer.GetMonthVoiceMi(), "mtvoice_at": simer.GetMtVoiceAt()})
+		log.Println(voice)
 	} else {
 		return fmt.Errorf("parse sim-voice-usage err %w", err)
 	}
@@ -229,7 +224,7 @@ func (m *Mobile) MtVoice(simer Simer) error {
 }
 
 // 0:申请停机(已激活转已停机) 1:申请复机(已停机转已激活) 2:库存转已激活 3:可测试转库存 4:可测试转待激活 5:可测试转已激活 6:待激活转已激活
-func (m *Mobile) ChgLfcy(simer Simer, status uint8) error {
+func (m *Mobile) ChgLfcy(simer Simer, status int8) error {
 	data := map[string]any{
 		"iccid":    simer.GetIccid(),
 		"operType": status,
@@ -296,8 +291,6 @@ func (m *Mobile) SwtVoiceOn(simer Simer, voiceOn int8) error {
 	} else if resp.Status != "0" {
 		return fmt.Errorf("request operate-sim-call-function err : %v %v", resp.Status, resp.Message)
 	}
-	simer.SetVoiceOn(voiceOn)
-	db.Engine.Cols("voice_on").Update(simer)
 	return nil
 }
 
@@ -323,7 +316,5 @@ func (m *Mobile) LitRate(simer Simer, MB uint8) error {
 	} else if resp.Status != "0" {
 		return fmt.Errorf("request operate-network-speed err : %v %v", resp.Status, resp.Message)
 	}
-	simer.SetRate(data["serviceUsageState"].(int8))
-	db.Engine.Cols("rate").Update(simer)
 	return nil
 }
