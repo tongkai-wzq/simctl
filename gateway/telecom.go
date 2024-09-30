@@ -206,7 +206,6 @@ func (t *Telecom) MtFlows(simers []Simer) error {
 }
 
 func (t *Telecom) ChgLfcy(simer Simer, status int8) error {
-	//lib.DB.Save(simer)
 	return nil
 }
 
