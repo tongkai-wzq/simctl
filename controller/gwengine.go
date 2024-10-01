@@ -11,17 +11,17 @@ import (
 
 type GatewayEngine struct {
 	lastId         int64
-	gatewayUser    model.GatewayUser
+	gwUser         model.GatewayUser
 	qryItems       []*geItem
 	qryFunsCounter map[string]int
 }
 
 func (ge *GatewayEngine) GetSims() []model.Sim {
-	var sims []model.Sim
-	if db.Engine.Where("gwuser_id = ? AND id > ?", ge.gatewayUser.Id, ge.lastId).OrderBy("id").Limit(10).Find(&sims); len(sims) == 0 {
-		ge.lastId = 0
-	} else {
+	sims := make([]model.Sim, 0)
+	if db.Engine.Where("gwuser_id = ? AND id > ?", ge.gwUser.Id, ge.lastId).OrderBy("id").Limit(10).Find(&sims); len(sims) > 0 {
 		ge.lastId = sims[len(sims)-1].Id
+	} else {
+		ge.lastId = 0
 	}
 	return sims
 }
@@ -88,7 +88,7 @@ func (ge *GatewayEngine) statsQryFuns() {
 }
 
 func (ge *GatewayEngine) isEnough() bool {
-	switch ge.gatewayUser.Gateway.(type) {
+	switch ge.gwUser.Gateway.(type) {
 	case *gateway.Unicom:
 		if count, ok := ge.qryFunsCounter["QryDtls"]; ok && count > 20 {
 			return true
@@ -115,7 +115,7 @@ func (ge *GatewayEngine) isEnough() bool {
 
 func (ge *GatewayEngine) qry() {
 	var simers []gateway.Simer
-	switch gateway := ge.gatewayUser.Gateway.(type) {
+	switch gateway := ge.gwUser.Gateway.(type) {
 	case *gateway.Unicom:
 		for qryFun := range ge.qryFunsCounter {
 			if qryFun == "QryDtls" {
@@ -140,9 +140,6 @@ func (ge *GatewayEngine) qry() {
 			}
 			if qryFun == "MtFlow" {
 				ge.qryConcurt(qryFun, gateway.MtFlow, 30)
-			}
-			if qryFun == "MtVoice" {
-				ge.qryConcurt(qryFun, gateway.MtVoice, 30)
 			}
 		}
 	case *gateway.Telecom:
@@ -172,15 +169,18 @@ func (ge *GatewayEngine) qry() {
 
 func (ge *GatewayEngine) qryConcurt(qryFun string, callback func(sim gateway.Simer) error, size int) {
 	sims := ge.getQryFunSims(qryFun)
-	sliceChunks := lib.SliceChunks[*Sim]{Items: sims, Size: size}
-	sliceChunks.Init()
+	var start, end int
 	for {
-		sims := sliceChunks.Get()
-		if len(sims) == 0 {
+		if start == len(sims) {
 			break
 		}
+		end = start + size
+		if end > len(sims) {
+			end = len(sims)
+		}
+		bSims := sims[start:end]
 		var wg sync.WaitGroup
-		for _, sim := range sims {
+		for _, sim := range bSims {
 			wg.Add(1)
 			go func(sim *model.Sim) {
 				defer wg.Done()
@@ -188,6 +188,7 @@ func (ge *GatewayEngine) qryConcurt(qryFun string, callback func(sim gateway.Sim
 			}(sim)
 		}
 		wg.Wait()
+		start = end
 	}
 }
 

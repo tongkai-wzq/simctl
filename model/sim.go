@@ -9,20 +9,22 @@ import (
 )
 
 type Sim struct {
-	Id      int64  `json:"id"`
-	AgentId int64  `json:"agentId"`
-	Agent   *Agent `xorm:"-" json:"agent"`
-	GroupId int64
-	Group   *Group     `xorm:"-" json:"group"`
-	Iccid   string     `json:"iccid"`
-	Msisdn  string     `json:"msisdn"`
-	MapNber string     `json:"mapNber"`
-	Auth    bool       `json:"auth"`
-	FlowOn  int8       `json:"flowOn"`
-	Status  int8       `json:"status"`
-	SyncAt  *time.Time `json:"syncAt"`
-	MonthKb int64      `json:"monthKb"`
-	MonthAt *time.Time `json:"monthAt"`
+	Id       int64        `json:"id"`
+	GwuserId int64        ` json:"gwuserId"`
+	GwUser   *GatewayUser `xorm:"-" json:"gwUser"`
+	AgentId  int64        `json:"agentId"`
+	Agent    *Agent       `xorm:"-" json:"agent"`
+	GroupId  int64
+	Group    *Group     `xorm:"-" json:"group"`
+	Iccid    string     `json:"iccid"`
+	Msisdn   string     `json:"msisdn"`
+	MapNber  string     `json:"mapNber"`
+	Auth     bool       `json:"auth"`
+	FlowOn   int8       `json:"flowOn"`
+	Status   int8       `json:"status"`
+	SyncAt   *time.Time `json:"syncAt"`
+	MonthKb  int64      `json:"monthKb"`
+	MonthAt  *time.Time `json:"monthAt"`
 }
 
 func (s *Sim) GetIccid() string {
