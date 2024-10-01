@@ -50,7 +50,7 @@ func (ge *GatewayEngine) Run() {
 		for _, item := range ge.qryItems {
 			item.complete()
 		}
-		clear(ge.qryItems)
+		ge.qryItems = nil
 	}
 }
 
@@ -117,16 +117,11 @@ func (ge *GatewayEngine) qry() {
 	var simers []gateway.Simer
 	switch gateway := ge.gwUser.Gateway.(type) {
 	case *gateway.Unicom:
-		for qryFun := range ge.qryFunsCounter {
-			if qryFun == "QryDtls" {
-				sims := ge.getQryFunSims(qryFun)
-				for _, sim := range sims {
-					simers = append(simers, sim)
-				}
-				gateway.QryDtls(simers)
-				clear(simers)
-			}
+		sims := ge.getQryFunSims("QryDtls")
+		for _, sim := range sims {
+			simers = append(simers, sim)
 		}
+		gateway.QryDtls(simers)
 	case *gateway.Mobile:
 		for qryFun := range ge.qryFunsCounter {
 			if qryFun == "QrySts" {
@@ -150,7 +145,6 @@ func (ge *GatewayEngine) qry() {
 					simers = append(simers, sim)
 				}
 				gateway.QryAuthStses(simers)
-				clear(simers)
 			}
 			if qryFun == "MtFlows" {
 				sims := ge.getQryFunSims(qryFun)
@@ -158,11 +152,11 @@ func (ge *GatewayEngine) qry() {
 					simers = append(simers, sim)
 				}
 				gateway.MtFlows(simers)
-				clear(simers)
 			}
 			if qryFun == "QryStsMore" {
 				ge.qryConcurt(qryFun, gateway.QryStsMore, 10)
 			}
+			simers = nil
 		}
 	}
 }
