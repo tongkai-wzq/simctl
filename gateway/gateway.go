@@ -30,9 +30,14 @@ type Simer interface {
 	GetMonthAt() *time.Time
 }
 
+type GwUserer interface {
+	GetId() int64
+	GetName() string
+}
+
 type GateWayer interface {
-	GetGwUserId() int64
-	SetGwUserId(gwUserId int64)
+	GetGwUser() GwUserer
+	SetGwUser(gwUser GwUserer)
 	ChgLfcy(simer Simer, status int8) error
 	IsCycleNear(gateway GateWayer) bool
 	IsCurtCycle(gateway GateWayer, at time.Time) bool
@@ -43,15 +48,15 @@ type SwtFlowOner interface {
 }
 
 type gateway struct {
-	gwUserId int64
+	gwUser GwUserer
 }
 
-func (gw *gateway) GetGwUserId() int64 {
-	return gw.gwUserId
+func (gw *gateway) GetGwUser() GwUserer {
+	return gw.gwUser
 }
 
-func (gw *gateway) SetGwUserId(gwUserId int64) {
-	gw.gwUserId = gwUserId
+func (gw *gateway) SetGwUser(gwUser GwUserer) {
+	gw.gwUser = gwUser
 }
 
 func (gw *gateway) IsCycleNear(gateway GateWayer) bool {
