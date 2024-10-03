@@ -27,9 +27,10 @@ func (ge *GatewayEngine) GetSims() []model.Sim {
 }
 
 func (ge *GatewayEngine) Run() {
+	ge.qryFunsCounter = make(map[string]int)
 	for {
 		if ge.lastId == 0 {
-			time.Sleep(30 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 		for {
 			sims := ge.GetSims()
@@ -54,8 +55,8 @@ func (ge *GatewayEngine) Run() {
 	}
 }
 
-func (ge *GatewayEngine) initItems(sims []model.Sim) uint8 {
-	var count uint8
+func (ge *GatewayEngine) initItems(sims []model.Sim) int {
+	var count int
 	for _, sim := range sims {
 		geItem := geItem{
 			sim: sim,
@@ -63,27 +64,19 @@ func (ge *GatewayEngine) initItems(sims []model.Sim) uint8 {
 		if qryFuns := geItem.init(); len(qryFuns) > 0 {
 			ge.qryItems = append(ge.qryItems, &geItem)
 			count++
+			ge.statsQryFuns(qryFuns)
 		}
-	}
-	if count > 0 {
-		ge.statsQryFuns()
 	}
 	return count
 }
 
-func (ge *GatewayEngine) statsQryFuns() {
-	counter := make(map[string]int, 10)
-	for _, item := range ge.qryItems {
-		for _, qryFun := range item.qryFuns {
-			if count, ok := counter[qryFun]; ok {
-				counter[qryFun] = count + 1
-			} else {
-				counter[qryFun] = 1
-			}
+func (ge *GatewayEngine) statsQryFuns(qryFuns []string) {
+	for _, qryFun := range qryFuns {
+		if count, ok := ge.qryFunsCounter[qryFun]; ok {
+			ge.qryFunsCounter[qryFun] = count + 1
+		} else {
+			ge.qryFunsCounter[qryFun] = 1
 		}
-	}
-	if len(counter) > 0 {
-		ge.qryFunsCounter = counter
 	}
 }
 
@@ -117,11 +110,13 @@ func (ge *GatewayEngine) qry() {
 	var simers []gateway.Simer
 	switch gateway := ge.gwUser.Gateway.(type) {
 	case *gateway.Unicom:
-		sims := ge.getQryFunSims("QryDtls")
-		for _, sim := range sims {
-			simers = append(simers, sim)
+		if count, ok := ge.qryFunsCounter["QryDtls"]; ok && count > 0 {
+			sims := ge.getQryFunSims("QryDtls")
+			for _, sim := range sims {
+				simers = append(simers, sim)
+			}
+			gateway.QryDtls(simers)
 		}
-		gateway.QryDtls(simers)
 	case *gateway.Mobile:
 		for qryFun := range ge.qryFunsCounter {
 			if qryFun == "QrySts" {
@@ -161,7 +156,7 @@ func (ge *GatewayEngine) qry() {
 	}
 }
 
-func (ge *GatewayEngine) qryConcurt(qryFun string, callback func(sim gateway.Simer) error, size int) {
+func (ge *GatewayEngine) qryConcurt(qryFun string, qry func(sim gateway.Simer) error, size int) {
 	sims := ge.getQryFunSims(qryFun)
 	var start, end int
 	for {
@@ -178,7 +173,7 @@ func (ge *GatewayEngine) qryConcurt(qryFun string, callback func(sim gateway.Sim
 			wg.Add(1)
 			go func(sim *model.Sim) {
 				defer wg.Done()
-				callback(sim)
+				qry(sim)
 			}(sim)
 		}
 		wg.Wait()
@@ -189,8 +184,7 @@ func (ge *GatewayEngine) qryConcurt(qryFun string, callback func(sim gateway.Sim
 func (ge *GatewayEngine) getQryFunSims(qryFun string) []*model.Sim {
 	var sims []*model.Sim
 	for _, item := range ge.qryItems {
-		slices.Sort(item.qryFuns)
-		if _, exist := slices.BinarySearch(item.qryFuns, qryFun); exist {
+		if exist := slices.Contains(item.qryFuns, qryFun); exist {
 			sims = append(sims, &item.sim)
 		}
 	}
