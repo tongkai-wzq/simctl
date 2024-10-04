@@ -18,9 +18,9 @@ func (gu *GatewayUser) GetName() string {
 	return gu.Name
 }
 
-func (gu *GatewayUser) GateWay() gateway.GateWayer {
+func (gu *GatewayUser) LoadGateWay() {
 	if gu.Gateway != nil {
-		return gu.Gateway
+		return
 	}
 	switch gu.GwType {
 	case "mobile":
@@ -43,8 +43,5 @@ func (gu *GatewayUser) GateWay() gateway.GateWayer {
 			CustNumber: gu.Params["custNumber"],
 		}
 		gu.Gateway.SetGwUser(gu)
-	default:
-		return nil
 	}
-	return gu.Gateway
 }

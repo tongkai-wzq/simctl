@@ -91,6 +91,10 @@ func (s *Sim) GetBaseExpired() *time.Time {
 	return nil
 }
 
+func (s *Sim) GetPacket() *Packet {
+	return nil
+}
+
 type SaleMeal struct {
 	MealId      int64   `json:"mealId"`
 	Title       string  `json:"title"`

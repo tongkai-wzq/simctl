@@ -59,7 +59,8 @@ func (ge *GatewayEngine) initItems(sims []model.Sim) int {
 	var count int
 	for _, sim := range sims {
 		geItem := geItem{
-			sim: sim,
+			gwEngine: ge,
+			sim:      sim,
 		}
 		if qryFuns := geItem.init(); len(qryFuns) > 0 {
 			ge.qryItems = append(ge.qryItems, &geItem)
@@ -192,12 +193,71 @@ func (ge *GatewayEngine) getQryFunSims(qryFun string) []*model.Sim {
 }
 
 type geItem struct {
-	sim     model.Sim
-	qryFuns []string
+	gwEngine *GatewayEngine
+	sim      model.Sim
+	qryFuns  []string
+	packet   *model.Packet
+	must     bool
+	monthKb  *int64
 }
 
 func (gei *geItem) init() []string {
-	return nil
+	gei.packet = gei.sim.GetPacket()
+	gei.handleMust()
+	switch gei.gwEngine.gwUser.Gateway.(type) {
+	case *gateway.Unicom:
+		if gei.sim.Auth {
+			if gei.sim.SyncAt == nil || time.Since(*gei.sim.SyncAt) > 24*time.Hour || gei.must {
+				gei.qryFuns = append(gei.qryFuns, "QryDtls")
+			}
+		} else {
+			if gei.sim.SyncAt == nil || time.Since(*gei.sim.SyncAt) > 8*time.Hour {
+				gei.qryFuns = append(gei.qryFuns, "QryDtls")
+			}
+		}
+	case *gateway.Mobile:
+		if gei.sim.Auth {
+			if gei.sim.SyncAt == nil || time.Since(*gei.sim.SyncAt) > 24*time.Hour {
+				gei.qryFuns = append(gei.qryFuns, "QryAuthSts", "QrySts", "QryCmunt")
+			}
+			if gei.must {
+				gei.qryFuns = append(gei.qryFuns, "MtFlow")
+			}
+		} else {
+			if gei.sim.SyncAt == nil || time.Since(*gei.sim.SyncAt) > 8*time.Hour {
+				gei.qryFuns = append(gei.qryFuns, "QryAuthSts")
+			}
+		}
+	case *gateway.Telecom:
+		if gei.sim.Auth {
+			if gei.sim.SyncAt == nil || time.Since(*gei.sim.SyncAt) > 24*time.Hour {
+				gei.qryFuns = append(gei.qryFuns, "QryStsMore")
+			}
+			if gei.must {
+				gei.qryFuns = append(gei.qryFuns, "MtFlows")
+			}
+		} else {
+			if gei.sim.SyncAt == nil || time.Since(*gei.sim.SyncAt) > 8*time.Hour {
+				gei.qryFuns = append(gei.qryFuns, "QryAuthStses")
+			}
+		}
+	}
+	return gei.qryFuns
+}
+
+func (gei *geItem) handleMust() {
+	if gei.gwEngine.gwUser.Gateway.IsCycleNear(gei.gwEngine.gwUser.Gateway) {
+		return
+	}
+	if gei.packet == nil {
+		return
+	}
+	if gei.sim.MonthAt == nil || !gei.gwEngine.gwUser.Gateway.IsCurtCycle(gei.gwEngine.gwUser.Gateway, *gei.sim.MonthAt) {
+		gei.must = true
+	} else if time.Since(*gei.sim.MonthAt) > 15*time.Minute {
+		gei.must = true
+		gei.monthKb = &gei.sim.MonthKb
+	}
 }
 
 func (gei *geItem) complete() {
