@@ -3,6 +3,7 @@ package model
 import (
 	"log"
 	"simctl/db"
+	"simctl/gateway"
 	"time"
 
 	"xorm.io/builder"
@@ -26,6 +27,9 @@ type Sim struct {
 	MonthKb  int64      `json:"monthKb"`
 	MonthAt  *time.Time `json:"monthAt"`
 	Packet   *Packet    `xorm:"-" json:"-"`
+	QryFuns  []string   `xorm:"-" json:"-"`
+	Must     bool       `xorm:"-" json:"-"`
+	LastKb   *int64     `xorm:"-" json:"-"`
 }
 
 func (s *Sim) GetIccid() string {
@@ -103,20 +107,69 @@ func (s *Sim) LoadPacket() {
 	}
 }
 
-func (s *Sim) IsMust() (bool, *int64) {
+func (s *Sim) handleMust() {
 	gwUser := s.GetGwUser()
 	if gwUser.Gateway.IsCycleNear(gwUser.Gateway) {
-		return false, nil
+		return
 	}
 	if s.Packet == nil {
-		return false, nil
+		return
 	}
 	if s.MonthAt == nil || !gwUser.Gateway.IsCurtCycle(gwUser.Gateway, *s.MonthAt) {
-		return true, nil
+		s.Must = true
 	} else if time.Since(*s.MonthAt) > 15*time.Minute {
-		return true, &s.MonthKb
+		s.Must = true
+		s.LastKb = &s.MonthKb
 	}
-	return false, nil
+}
+
+func (s *Sim) QryInit() []string {
+	gwUser := s.GetGwUser()
+	s.LoadPacket()
+	s.handleMust()
+	switch gwUser.Gateway.(type) {
+	case *gateway.Unicom:
+		if s.Auth {
+			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour || s.Must {
+				s.QryFuns = append(s.QryFuns, "QryDtls")
+			}
+		} else {
+			if s.SyncAt == nil || time.Since(*s.SyncAt) > 8*time.Hour {
+				s.QryFuns = append(s.QryFuns, "QryDtls")
+			}
+		}
+	case *gateway.Mobile:
+		if s.Auth {
+			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour {
+				s.QryFuns = append(s.QryFuns, "QryAuthSts", "QrySts", "QryCmunt")
+			}
+			if s.Must {
+				s.QryFuns = append(s.QryFuns, "MtFlow")
+			}
+		} else {
+			if s.SyncAt == nil || time.Since(*s.SyncAt) > 8*time.Hour {
+				s.QryFuns = append(s.QryFuns, "QryAuthSts")
+			}
+		}
+	case *gateway.Telecom:
+		if s.Auth {
+			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour {
+				s.QryFuns = append(s.QryFuns, "QryStsMore")
+			}
+			if s.Must {
+				s.QryFuns = append(s.QryFuns, "MtFlows")
+			}
+		} else {
+			if s.SyncAt == nil || time.Since(*s.SyncAt) > 8*time.Hour {
+				s.QryFuns = append(s.QryFuns, "QryAuthStses")
+			}
+		}
+	}
+	return s.QryFuns
+}
+
+func (s *Sim) QryComplete() {
+	//gwUser := s.GetGwUser()
 }
 
 type SaleMeal struct {
