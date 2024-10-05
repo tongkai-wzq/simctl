@@ -103,7 +103,7 @@ func (s *Sim) LoadPacket() {
 	}
 }
 
-func (s *Sim) MustSync() (bool, *int64) {
+func (s *Sim) IsMust() (bool, *int64) {
 	gwUser := s.GetGwUser()
 	if gwUser.Gateway.IsCycleNear(gwUser.Gateway) {
 		return false, nil

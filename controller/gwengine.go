@@ -202,7 +202,7 @@ type geItem struct {
 
 func (gei *geItem) init() []string {
 	gei.sim.LoadPacket()
-	gei.must, gei.monthKb = gei.sim.MustSync()
+	gei.must, gei.monthKb = gei.sim.IsMust()
 	switch gei.gwEngine.gwUser.Gateway.(type) {
 	case *gateway.Unicom:
 		if gei.sim.Auth {
