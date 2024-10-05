@@ -2,6 +2,8 @@ package model
 
 import "simctl/gateway"
 
+var GatewayUsers map[int64]*GatewayUser = make(map[int64]*GatewayUser)
+
 type GatewayUser struct {
 	Id       int64
 	Name     string            `json:"name"`
@@ -19,9 +21,6 @@ func (gu *GatewayUser) GetName() string {
 }
 
 func (gu *GatewayUser) LoadGateWay() {
-	if gu.Gateway != nil {
-		return
-	}
 	switch gu.GwType {
 	case "mobile":
 		gu.Gateway = &gateway.Mobile{

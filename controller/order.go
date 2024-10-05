@@ -23,17 +23,17 @@ import (
 var buyWidgets map[string]*Buy = make(map[string]*Buy)
 
 func NewBuy(w http.ResponseWriter, r *http.Request) {
-	user := AuthUser(w, r)
-	if user == nil {
-		return
-	}
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
 	var buy Buy
-	buy.Conn = conn
-	buy.user = user
+	if user := AuthUser(w, r); user != nil {
+		buy.user = user
+	} else {
+		return
+	}
+	if conn, err := upgrader.Upgrade(w, r, nil); err == nil {
+		buy.Conn = conn
+	} else {
+		return
+	}
 	buy.Run(&buy)
 }
 
@@ -54,7 +54,6 @@ func (b *Buy) GetHandleMap() map[string]func(bMsg []byte) {
 }
 
 type buyInitMsg struct {
-	message
 	SimId int64 `json:"simId"`
 }
 
@@ -95,7 +94,6 @@ func (b *Buy) OnInit(bMsg []byte) {
 }
 
 type buySubmitMsg struct {
-	message
 	MealKey   int64 `json:"mealKey"`
 	NextMonth bool  `json:"nextMonth"`
 }

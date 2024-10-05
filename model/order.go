@@ -28,7 +28,7 @@ type Order struct {
 	Price         float64   `json:"price"`
 	Amount        float64   `json:"amount"`
 	RefundAmt     float64   `json:"refundAmt"`
-	Packets       []*Packet `xorm:"-"`
+	Packets       []*Packet `xorm:"-" json:"-"`
 	Status        int8      `json:"status"`
 }
 

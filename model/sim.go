@@ -25,6 +25,7 @@ type Sim struct {
 	SyncAt   *time.Time `json:"syncAt"`
 	MonthKb  int64      `json:"monthKb"`
 	MonthAt  *time.Time `json:"monthAt"`
+	Packet   *Packet    `xorm:"-" json:"-"`
 }
 
 func (s *Sim) GetIccid() string {
@@ -78,6 +79,10 @@ func (s *Sim) LoadAgent() {
 	db.Engine.ID(s.AgentId).Get(s.Agent)
 }
 
+func (s *Sim) GetGwUser() *GatewayUser {
+	return GatewayUsers[s.GwuserId]
+}
+
 func (s *Sim) GetBaseExpired() *time.Time {
 	var (
 		expiredAt time.Time
@@ -91,8 +96,27 @@ func (s *Sim) GetBaseExpired() *time.Time {
 	return nil
 }
 
-func (s *Sim) GetPacket() *Packet {
-	return nil
+func (s *Sim) LoadPacket() {
+	packet := new(Packet)
+	if has, err := db.Engine.Where("sim_id = ? AND invalid IS FALSE AND used/kb_cft < kb", s.Id).OrderBy("expired_at,id").Get(s.Packet); err == nil && has {
+		s.Packet = packet
+	}
+}
+
+func (s *Sim) MustSync() (bool, *int64) {
+	gwUser := s.GetGwUser()
+	if gwUser.Gateway.IsCycleNear(gwUser.Gateway) {
+		return false, nil
+	}
+	if s.Packet == nil {
+		return false, nil
+	}
+	if s.MonthAt == nil || !gwUser.Gateway.IsCurtCycle(gwUser.Gateway, *s.MonthAt) {
+		return true, nil
+	} else if time.Since(*s.MonthAt) > 15*time.Minute {
+		return true, &s.MonthKb
+	}
+	return false, nil
 }
 
 type SaleMeal struct {
