@@ -1,10 +1,6 @@
 package gateway
 
 import (
-	"compress/gzip"
-	"context"
-	"fmt"
-	"io"
 	"time"
 
 	"github.com/imroc/req/v3"
@@ -15,7 +11,6 @@ var gwClient *req.Client
 func init() {
 	gwClient = req.C().SetTimeout(15 * time.Second)
 	gwClient.SetCommonHeader("Content-Type", "application/json")
-	gwClient.SetCommonHeader("Accept-Encoding", "gzip,deflate,sdch")
 }
 
 type Simer interface {
@@ -98,25 +93,4 @@ func (gw *gateway) IsCurtCycle(gateway GateWayer, at time.Time) bool {
 		}
 	}
 	return false
-}
-
-func (gw *gateway) send(req *req.Request) ([]byte, error) {
-	if resp := req.Do(context.Background()); resp.Err == nil && resp.IsSuccessState() {
-		var (
-			reader io.ReadCloser
-			err    error
-		)
-		if resp.Header.Get("Content-Encoding") == "gzip" {
-			if reader, err = gzip.NewReader(resp.Body); err != nil {
-				return nil, err
-			}
-		} else {
-			reader = resp.Body
-		}
-		return io.ReadAll(reader)
-	} else if resp.Err == nil {
-		return nil, fmt.Errorf("req StatusCode %v", resp.StatusCode)
-	} else {
-		return nil, fmt.Errorf("req StatusCode %v", resp.Err.Error())
-	}
 }

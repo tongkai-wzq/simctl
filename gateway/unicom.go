@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"simctl/db"
@@ -48,12 +47,8 @@ func (u *Unicom) post(uri string, data map[string]any, resp any) error {
 	data["version"] = "1.0"
 	params["data"] = data
 	req := gwClient.Post(uUrl + uri)
-	req.SetBodyJsonMarshal(params)
-	body, err := u.send(req)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(body, resp); err != nil {
+	req.SetBody(params)
+	if err := req.Do().Into(resp); err != nil {
 		return err
 	}
 	return nil

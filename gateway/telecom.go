@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"crypto/md5"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"simctl/db"
@@ -54,19 +53,9 @@ func (t *Telecom) post(uri string, data map[string]any, resp any) error {
 	req.SetHeader("AppKey", t.AppKey)
 	req.SetHeader("Timestamp", timestamp)
 	req.SetHeader("Sign", strings.ToUpper(t.getSign(data, timestamp)))
-	req.SetBodyJsonMarshal(data)
-	body, err := t.send(req)
-	if err != nil {
+	req.SetBody(data)
+	if err := req.Do().Into(resp); err != nil { // "/5gcmp/openapi/v1/common/singleCutNet"  toXml
 		return err
-	}
-	if uri == "/5gcmp/openapi/v1/common/singleCutNet" {
-		if err := xml.Unmarshal(body, resp); err != nil {
-			return err
-		}
-	} else {
-		if err := json.Unmarshal(body, resp); err != nil {
-			return err
-		}
 	}
 	return nil
 }

@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -58,12 +57,8 @@ func (m *Mobile) post(uri string, data map[string]any, resp any) error {
 		}
 	}
 	req := gwClient.Post(mUrl + uri)
-	req.SetBodyJsonMarshal(data)
-	body, err := m.send(req)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(body, resp); err != nil {
+	req.SetBody(data)
+	if err := req.Do().Into(resp); err != nil {
 		return err
 	}
 	return nil
