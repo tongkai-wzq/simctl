@@ -105,13 +105,14 @@ func (s *Sim) GetPacket() *Packet {
 }
 
 func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
+	gwUser := s.GetGwUser()
 	var (
 		qryFuns []string
 		must    bool
 		lastKb  *int64
+		packet  *Packet
 	)
-	gwUser := s.GetGwUser()
-	packet := s.GetPacket()
+	packet = s.GetPacket()
 	if gwUser.Gateway.IsCycleNear(gwUser.Gateway) {
 		must = false
 		lastKb = nil
@@ -125,7 +126,6 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 		must = true
 		lastKb = &s.MonthKb
 	}
-
 	switch gwUser.Gateway.(type) {
 	case *gateway.Unicom:
 		if s.Auth {
