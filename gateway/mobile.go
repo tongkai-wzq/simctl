@@ -1,14 +1,10 @@
 package gateway
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
-	"net/http"
 	"simctl/db"
 	"strconv"
 	"time"
@@ -61,14 +57,8 @@ func (m *Mobile) post(uri string, data map[string]any, resp any) error {
 			return err
 		}
 	}
-	form, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, mUrl+uri, io.NopCloser(bytes.NewReader(form)))
-	if err != nil {
-		return err
-	}
+	req := gwClient.Post(mUrl + uri)
+	req.SetBodyJsonMarshal(data)
 	reader, err := m.send(req)
 	if err != nil {
 		return err

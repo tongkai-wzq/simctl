@@ -1,14 +1,11 @@
 package gateway
 
 import (
-	"bytes"
-	"context"
 	"crypto/md5"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
-	"net/http"
 	"simctl/db"
 	"sort"
 	"strconv"
@@ -54,17 +51,11 @@ func (t *Telecom) getSign(data map[string]any, timestamp string) string {
 
 func (t *Telecom) post(uri string, data map[string]any, resp any) error {
 	timestamp := time.Now().Format("20060102150405")
-	form, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, tUrl+uri, io.NopCloser(bytes.NewReader(form)))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("AppKey", t.AppKey)
-	req.Header.Add("Timestamp", timestamp)
-	req.Header.Add("Sign", strings.ToUpper(t.getSign(data, timestamp)))
+	req := gwClient.Post(tUrl + uri)
+	req.SetHeader("AppKey", t.AppKey)
+	req.SetHeader("Timestamp", timestamp)
+	req.SetHeader("Sign", strings.ToUpper(t.getSign(data, timestamp)))
+	req.SetBodyJsonMarshal(data)
 	reader, err := t.send(req)
 	if err != nil {
 		return err

@@ -1,14 +1,10 @@
 package gateway
 
 import (
-	"bytes"
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
-	"net/http"
 	"simctl/db"
 	"strconv"
 	"time"
@@ -51,14 +47,8 @@ func (u *Unicom) post(uri string, data map[string]any, resp any) error {
 	data["openId"] = u.OpenId
 	data["version"] = "1.0"
 	params["data"] = data
-	form, err := json.Marshal(params)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, uUrl+uri, io.NopCloser(bytes.NewReader(form)))
-	if err != nil {
-		return err
-	}
+	req := gwClient.Post(uUrl + uri)
+	req.SetBodyJsonMarshal(params)
 	reader, err := u.send(req)
 	if err != nil {
 		return err
