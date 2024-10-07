@@ -113,10 +113,7 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 		packet  *Packet
 	)
 	packet = s.GetPacket()
-	if gwUser.Gateway.IsCycleNear(gwUser.Gateway) {
-		must = false
-		lastKb = nil
-	} else if packet == nil {
+	if packet == nil || gwUser.Gateway.IsCycleNear(gwUser.Gateway) {
 		must = false
 		lastKb = nil
 	} else if s.MonthAt == nil || !gwUser.Gateway.IsCurtCycle(gwUser.Gateway, *s.MonthAt) {

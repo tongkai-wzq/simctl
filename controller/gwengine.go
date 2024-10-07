@@ -10,8 +10,8 @@ import (
 )
 
 type GatewayEngine struct {
-	lastId         int64
 	gwUser         *model.GatewayUser
+	lastId         int64
 	qryItems       []*geItem
 	qryFunsCounter map[string]int
 }
