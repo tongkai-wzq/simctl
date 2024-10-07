@@ -213,6 +213,6 @@ func (gei *geItem) complete() {
 	if used > 0 {
 		gei.packet.IncUsed(used)
 	} else if used < 0 {
-		log.Printf("%v Flow异常 %vKB \n", gei.sim.Msisdn, used)
+		log.Printf("%v Flow异常 %v KB \n", gei.sim.Msisdn, used)
 	}
 }
