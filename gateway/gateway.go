@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"time"
 
 	"github.com/imroc/req/v3"
@@ -102,23 +101,22 @@ func (gw *gateway) IsCurtCycle(gateway GateWayer, at time.Time) bool {
 }
 
 func (gw *gateway) send(req *req.Request) (io.ReadCloser, error) {
-	if response := req.Do(context.Background()); response.StatusCode == http.StatusOK {
-		defer response.Body.Close()
+	if resp := req.Do(context.Background()); resp.Err == nil && resp.IsSuccessState() {
 		var (
 			reader io.ReadCloser
 			err    error
 		)
-		if response.Header.Get("Content-Encoding") == "gzip" {
-			if reader, err = gzip.NewReader(response.Body); err != nil {
+		if resp.Header.Get("Content-Encoding") == "gzip" {
+			if reader, err = gzip.NewReader(resp.Body); err != nil {
 				return nil, err
 			}
-			defer reader.Close()
 		} else {
-			reader = response.Body
+			reader = resp.Body
 		}
 		return reader, nil
+	} else if resp.Err == nil {
+		return nil, fmt.Errorf("req StatusCode %v", resp.StatusCode)
 	} else {
-		defer response.Body.Close()
-		return nil, fmt.Errorf("req StatusCode %v", response.StatusCode)
+		return nil, fmt.Errorf("req StatusCode %v", resp.Err.Error())
 	}
 }
