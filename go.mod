@@ -10,6 +10,7 @@ require (
 	github.com/go-chi/render v1.0.3
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/imroc/req/v3 v3.46.1
 	github.com/tjfoc/gmsm v1.4.1
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.20
 	xorm.io/builder v0.3.13
@@ -31,7 +32,6 @@ require (
 	github.com/google/pprof v0.0.0-20240910150728-a0b0bb1d4134 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/imroc/req/v3 v3.46.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
