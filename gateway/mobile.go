@@ -59,11 +59,11 @@ func (m *Mobile) post(uri string, data map[string]any, resp any) error {
 	}
 	req := gwClient.Post(mUrl + uri)
 	req.SetBodyJsonMarshal(data)
-	reader, err := m.send(req)
+	body, err := m.send(req)
 	if err != nil {
 		return err
 	}
-	if err := json.NewDecoder(reader).Decode(resp); err != nil {
+	if err := json.Unmarshal(body, resp); err != nil {
 		return err
 	}
 	return nil

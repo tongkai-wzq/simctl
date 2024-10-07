@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"simctl/db"
 	"sort"
 	"strconv"
@@ -56,20 +55,16 @@ func (t *Telecom) post(uri string, data map[string]any, resp any) error {
 	req.SetHeader("Timestamp", timestamp)
 	req.SetHeader("Sign", strings.ToUpper(t.getSign(data, timestamp)))
 	req.SetBodyJsonMarshal(data)
-	reader, err := t.send(req)
+	body, err := t.send(req)
 	if err != nil {
 		return err
 	}
 	if uri == "/5gcmp/openapi/v1/common/singleCutNet" {
-		if bytes, err := io.ReadAll(reader); err == nil {
-			if err := xml.Unmarshal(bytes, resp); err != nil {
-				return err
-			}
-		} else {
+		if err := xml.Unmarshal(body, resp); err != nil {
 			return err
 		}
 	} else {
-		if err := json.NewDecoder(reader).Decode(resp); err != nil {
+		if err := json.Unmarshal(body, resp); err != nil {
 			return err
 		}
 	}

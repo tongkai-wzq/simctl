@@ -100,7 +100,7 @@ func (gw *gateway) IsCurtCycle(gateway GateWayer, at time.Time) bool {
 	return false
 }
 
-func (gw *gateway) send(req *req.Request) (io.ReadCloser, error) {
+func (gw *gateway) send(req *req.Request) ([]byte, error) {
 	if resp := req.Do(context.Background()); resp.Err == nil && resp.IsSuccessState() {
 		var (
 			reader io.ReadCloser
@@ -113,7 +113,7 @@ func (gw *gateway) send(req *req.Request) (io.ReadCloser, error) {
 		} else {
 			reader = resp.Body
 		}
-		return reader, nil
+		return io.ReadAll(reader)
 	} else if resp.Err == nil {
 		return nil, fmt.Errorf("req StatusCode %v", resp.StatusCode)
 	} else {

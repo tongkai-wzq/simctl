@@ -49,11 +49,11 @@ func (u *Unicom) post(uri string, data map[string]any, resp any) error {
 	params["data"] = data
 	req := gwClient.Post(uUrl + uri)
 	req.SetBodyJsonMarshal(params)
-	reader, err := u.send(req)
+	body, err := u.send(req)
 	if err != nil {
 		return err
 	}
-	if err := json.NewDecoder(reader).Decode(resp); err != nil {
+	if err := json.Unmarshal(body, resp); err != nil {
 		return err
 	}
 	return nil
