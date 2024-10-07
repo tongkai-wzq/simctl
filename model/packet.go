@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"errors"
+	"simctl/db"
+	"time"
+)
 
 type Packet struct {
 	Id        int64 `json:"id"`
@@ -15,4 +19,13 @@ type Packet struct {
 	KbCft     float64   `json:"kbCft"`
 	Used      int64     `json:"used"`
 	Invalid   bool      `json:"invalid"`
+}
+
+func (p *Packet) IncUsed(used int64) error {
+	if p.Invalid {
+		return errors.New("Packet is Invalid")
+	}
+	p.Used += used
+	db.Engine.Cols("used").Update(p)
+	return nil
 }

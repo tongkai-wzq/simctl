@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"simctl/db"
 	"simctl/gateway"
 	"simctl/model"
@@ -59,8 +60,7 @@ func (ge *GatewayEngine) initItems(sims []model.Sim) int {
 	var count int
 	for _, sim := range sims {
 		geItem := geItem{
-			gwEngine: ge,
-			sim:      sim,
+			sim: sim,
 		}
 		if qryFuns := geItem.init(); len(qryFuns) > 0 {
 			ge.qryItems = append(ge.qryItems, &geItem)
@@ -193,12 +193,11 @@ func (ge *GatewayEngine) getQryFunSims(qryFun string) []*model.Sim {
 }
 
 type geItem struct {
-	gwEngine *GatewayEngine
-	sim      model.Sim
-	qryFuns  []string
-	must     bool
-	lastKb   *int64
-	packet   *model.Packet
+	sim     model.Sim
+	qryFuns []string
+	must    bool
+	lastKb  *int64
+	packet  *model.Packet
 }
 
 func (gei *geItem) init() []string {
@@ -207,5 +206,13 @@ func (gei *geItem) init() []string {
 }
 
 func (gei *geItem) complete() {
-
+	if !gei.must || gei.lastKb == nil {
+		return
+	}
+	used := gei.sim.MonthKb - *gei.lastKb
+	if used > 0 {
+		gei.packet.IncUsed(used)
+	} else if used < 0 {
+		log.Printf("%v Flow异常 %vKB \n", gei.sim.Msisdn, used)
+	}
 }
