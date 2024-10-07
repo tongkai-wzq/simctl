@@ -12,7 +12,7 @@ import (
 type GatewayEngine struct {
 	lastId         int64
 	gwUser         *model.GatewayUser
-	qryItems       []*model.Sim
+	qryItems       []*geItem
 	qryFunsCounter map[string]int
 }
 
@@ -49,7 +49,7 @@ func (ge *GatewayEngine) Run() {
 		}
 		ge.qry()
 		for _, item := range ge.qryItems {
-			item.QryComplete()
+			item.complete()
 		}
 		ge.qryItems = nil
 	}
@@ -58,8 +58,12 @@ func (ge *GatewayEngine) Run() {
 func (ge *GatewayEngine) initItems(sims []model.Sim) int {
 	var count int
 	for _, sim := range sims {
-		if qryFuns := sim.QryInit(); len(qryFuns) > 0 {
-			ge.qryItems = append(ge.qryItems, &sim)
+		geItem := geItem{
+			gwEngine: ge,
+			sim:      sim,
+		}
+		if qryFuns := geItem.init(); len(qryFuns) > 0 {
+			ge.qryItems = append(ge.qryItems, &geItem)
 			count++
 			ge.statsQryFuns(qryFuns)
 		}
@@ -181,9 +185,27 @@ func (ge *GatewayEngine) qryConcurt(qryFun string, qry func(sim gateway.Simer) e
 func (ge *GatewayEngine) getQryFunSims(qryFun string) []*model.Sim {
 	var sims []*model.Sim
 	for _, item := range ge.qryItems {
-		if exist := slices.Contains(item.QryFuns, qryFun); exist {
-			sims = append(sims, item)
+		if exist := slices.Contains(item.qryFuns, qryFun); exist {
+			sims = append(sims, &item.sim)
 		}
 	}
 	return sims
+}
+
+type geItem struct {
+	gwEngine *GatewayEngine
+	sim      model.Sim
+	qryFuns  []string
+	must     bool
+	lastKb   *int64
+	packet   *model.Packet
+}
+
+func (gei *geItem) init() []string {
+	gei.qryFuns, gei.must, gei.lastKb, gei.packet = gei.sim.QryInit()
+	return gei.qryFuns
+}
+
+func (gei *geItem) complete() {
+
 }
