@@ -110,7 +110,8 @@ func (m *Mobile) QryAuthSts(simer Simer) error {
 	} else {
 		simer.SetAuth(false)
 	}
-	db.Engine.Cols("auth").Update(simer)
+	simer.SetSyncAt()
+	db.Engine.Cols("auth", "sync_at").Update(simer)
 	return nil
 }
 

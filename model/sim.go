@@ -74,6 +74,11 @@ func (s *Sim) GetMonthAt() *time.Time {
 	return s.MonthAt
 }
 
+func (s *Sim) SetSyncAt() {
+	now := time.Now()
+	s.SyncAt = &now
+}
+
 func (s *Sim) LoadAgent() {
 	s.Agent = new(Agent)
 	db.Engine.ID(s.AgentId).Get(s.Agent)

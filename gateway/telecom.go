@@ -94,7 +94,8 @@ func (t *Telecom) QryStsMore(simer Simer) error {
 	} else if resp.NetBlockStatusName == "已断网" {
 		simer.SetFlowOn(0)
 	}
-	db.Engine.Cols("status", "auth", "flow_on")
+	simer.SetSyncAt()
+	db.Engine.Cols("status", "auth", "flow_on", "sync_at").Update(simer)
 	return nil
 }
 
@@ -130,7 +131,8 @@ func (t *Telecom) QryAuthStses(simers []Simer) error {
 				} else {
 					simer.SetAuth(false)
 				}
-				db.Engine.Cols("auth").Update(simer)
+				simer.SetSyncAt()
+				db.Engine.Cols("auth", "sync_at").Update(simer)
 				break
 			}
 		}

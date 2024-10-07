@@ -10,7 +10,6 @@ var gwClient *req.Client
 
 func init() {
 	gwClient = req.C().SetTimeout(15 * time.Second)
-	gwClient.SetCommonHeader("Content-Type", "application/json")
 }
 
 type Simer interface {
@@ -25,6 +24,7 @@ type Simer interface {
 	GetMonthKb() int64
 	SetMonthKb(monthKb int64)
 	GetMonthAt() *time.Time
+	SetSyncAt()
 }
 
 type GwUserer interface {

@@ -129,7 +129,8 @@ func (u *Unicom) QryDtls(simers []Simer) error {
 				if monthToDateUsage, err := strconv.ParseFloat(terminal.MonthToDateDataUsage, 64); err == nil {
 					simer.SetMonthKb(int64(monthToDateUsage * 1024))
 				}
-				db.Engine.Cols("status", "auth", "month_kb").Update(simer)
+				simer.SetSyncAt()
+				db.Engine.Cols("status", "auth", "month_kb", "month_at", "sync_at").Update(simer)
 				break
 			}
 		}
