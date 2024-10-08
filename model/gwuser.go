@@ -20,6 +20,7 @@ type GatewayUser struct {
 func (gu *GatewayUser) GetId() int64 {
 	return gu.Id
 }
+
 func (gu *GatewayUser) GetName() string {
 	return gu.Name
 }

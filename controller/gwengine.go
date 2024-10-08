@@ -27,8 +27,12 @@ func (ge *GatewayEngine) GetSims() []model.Sim {
 	return sims
 }
 
-func (ge *GatewayEngine) Run() {
+func (ge *GatewayEngine) Init() *GatewayEngine {
 	ge.qryFunsCounter = make(map[string]int)
+	return ge
+}
+
+func (ge *GatewayEngine) Run() {
 	for {
 		if ge.lastId == 0 {
 			time.Sleep(3 * time.Second)
@@ -149,10 +153,10 @@ func (ge *GatewayEngine) qry() {
 				}
 				Gateway.MtFlows(simers)
 			}
+			simers = nil
 			if qryFun == "QryStsMore" {
 				ge.qryConcurt(qryFun, Gateway.QryStsMore, 10)
 			}
-			simers = nil
 		}
 	}
 }
