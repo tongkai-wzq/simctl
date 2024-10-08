@@ -109,28 +109,28 @@ func (ge *GatewayEngine) isEnough() bool {
 
 func (ge *GatewayEngine) qry() {
 	var simers []gateway.Simer
-	switch gateway := ge.gwUser.Gateway.(type) {
+	switch Gateway := ge.gwUser.Gateway.(type) {
 	case *gateway.Unicom:
 		if count, ok := ge.qryFunsCounter["QryDtls"]; ok && count > 0 {
 			sims := ge.getQryFunSims("QryDtls")
 			for _, sim := range sims {
 				simers = append(simers, sim)
 			}
-			gateway.QryDtls(simers)
+			Gateway.QryDtls(simers)
 		}
 	case *gateway.Mobile:
 		for qryFun := range ge.qryFunsCounter {
 			if qryFun == "QrySts" {
-				ge.qryConcurt(qryFun, gateway.QrySts, 30)
+				ge.qryConcurt(qryFun, Gateway.QrySts, 30)
 			}
 			if qryFun == "QryAuthSts" {
-				ge.qryConcurt(qryFun, gateway.QryAuthSts, 30)
+				ge.qryConcurt(qryFun, Gateway.QryAuthSts, 30)
 			}
 			if qryFun == "QryCmunt" {
-				ge.qryConcurt(qryFun, gateway.QryCmunt, 30)
+				ge.qryConcurt(qryFun, Gateway.QryCmunt, 30)
 			}
 			if qryFun == "MtFlow" {
-				ge.qryConcurt(qryFun, gateway.MtFlow, 30)
+				ge.qryConcurt(qryFun, Gateway.MtFlow, 30)
 			}
 		}
 	case *gateway.Telecom:
@@ -140,17 +140,17 @@ func (ge *GatewayEngine) qry() {
 				for _, sim := range sims {
 					simers = append(simers, sim)
 				}
-				gateway.QryAuthStses(simers)
+				Gateway.QryAuthStses(simers)
 			}
 			if qryFun == "MtFlows" {
 				sims := ge.getQryFunSims(qryFun)
 				for _, sim := range sims {
 					simers = append(simers, sim)
 				}
-				gateway.MtFlows(simers)
+				Gateway.MtFlows(simers)
 			}
 			if qryFun == "QryStsMore" {
-				ge.qryConcurt(qryFun, gateway.QryStsMore, 10)
+				ge.qryConcurt(qryFun, Gateway.QryStsMore, 10)
 			}
 			simers = nil
 		}
