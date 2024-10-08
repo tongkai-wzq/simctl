@@ -134,7 +134,8 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 			go Gateway.ChgLfcy(s, 3)
 		} else if packet != nil && s.Status == 3 {
 			go Gateway.ChgLfcy(s, 2)
-		} else if s.Auth {
+		}
+		if s.Auth {
 			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour || must {
 				qryFuns = append(qryFuns, "QryDtls")
 			}
@@ -148,7 +149,8 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 			go Gateway.SwtFlowOn(s, 0)
 		} else if packet != nil && s.Status == 2 && s.FlowOn == 0 {
 			go Gateway.SwtFlowOn(s, 1)
-		} else if s.Auth {
+		}
+		if s.Auth {
 			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour {
 				qryFuns = append(qryFuns, "QryAuthSts", "QrySts", "QryCmunt")
 			}
@@ -165,7 +167,8 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 			go Gateway.SwtFlowOn(s, 0)
 		} else if packet != nil && s.Status == 4 && s.FlowOn == 0 {
 			go Gateway.SwtFlowOn(s, 1)
-		} else if s.Auth {
+		}
+		if s.Auth {
 			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour {
 				qryFuns = append(qryFuns, "QryStsMore")
 			}

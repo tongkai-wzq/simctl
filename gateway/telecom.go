@@ -170,15 +170,16 @@ func (t *Telecom) MtFlows(simers []Simer) error {
 	} else if resp.Code != 0 {
 		return fmt.Errorf("request batchQryFlowByMonth err : %v %v", resp.Code, resp.Msg)
 	}
-	for _, simer := range simers {
-		for _, item := range resp.Data {
-			if item.AccessNumber == simer.GetMsisdn() {
-				if flowAmount, err := strconv.ParseFloat(item.FlowAmount, 64); err == nil {
-					simer.SetMonthKb(int64(flowAmount * 1024))
-					db.Engine.Cols("month_kb", "month_at").Update(simer)
-				}
-				break
+	for _, item := range resp.Data {
+		for _, simer := range simers {
+			if item.AccessNumber != simer.GetMsisdn() {
+				continue
 			}
+			if flowAmount, err := strconv.ParseFloat(item.FlowAmount, 64); err == nil {
+				simer.SetMonthKb(int64(flowAmount * 1024))
+				db.Engine.Cols("month_kb", "month_at").Update(simer)
+			}
+			break
 		}
 	}
 	return nil
