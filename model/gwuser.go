@@ -2,7 +2,11 @@ package model
 
 import "simctl/gateway"
 
-var GatewayUsers map[int64]*GatewayUser = make(map[int64]*GatewayUser)
+var GatewayUsers map[int64]*GatewayUser
+
+func init() {
+	GatewayUsers = make(map[int64]*GatewayUser)
+}
 
 type GatewayUser struct {
 	Id       int64
@@ -27,20 +31,18 @@ func (gu *GatewayUser) LoadGateWay() {
 			Appid:    gu.Params["appid"],
 			Password: gu.Params["password"],
 		}
-		gu.Gateway.SetGwUser(gu)
 	case "unicom":
 		gu.Gateway = &gateway.Unicom{
 			AppId:     gu.Params["appId"],
 			AppSecret: gu.Params["appSecret"],
 			OpenId:    gu.Params["openId"],
 		}
-		gu.Gateway.SetGwUser(gu)
 	case "telecom":
 		gu.Gateway = &gateway.Telecom{
 			AppKey:     gu.Params["appKey"],
 			SecretKey:  gu.Params["secretKey"],
 			CustNumber: gu.Params["custNumber"],
 		}
-		gu.Gateway.SetGwUser(gu)
 	}
+	gu.Gateway.SetGwUser(gu)
 }

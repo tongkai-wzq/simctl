@@ -212,7 +212,7 @@ func (gei *geItem) complete() {
 	used := gei.sim.MonthKb - *gei.lastKb
 	if used > 0 {
 		gei.packet.IncUsed(used)
-	} else if used < 0 {
+	} else if used < -1 {
 		log.Printf("%v Flow异常 %v KB \n", gei.sim.Msisdn, used)
 	}
 }
