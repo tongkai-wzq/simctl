@@ -124,18 +124,19 @@ func (t *Telecom) QryAuthStses(simers []Simer) error {
 	} else if resp.Code != 0 {
 		return fmt.Errorf("request qryRealNameStatus err : %v %v", resp.Code, resp.Msg)
 	}
-	for _, simer := range simers {
-		for _, item := range resp.Data.StatusList {
-			if item.AccessNumber == simer.GetMsisdn() {
-				if item.Status == "1" {
-					simer.SetAuth(true)
-				} else {
-					simer.SetAuth(false)
-				}
-				simer.SetSyncAt()
-				db.Engine.Cols("auth", "sync_at").Update(simer)
-				break
+	for _, item := range resp.Data.StatusList {
+		for _, simer := range simers {
+			if item.AccessNumber != simer.GetMsisdn() {
+				continue
 			}
+			if item.Status == "1" {
+				simer.SetAuth(true)
+			} else {
+				simer.SetAuth(false)
+			}
+			simer.SetSyncAt()
+			db.Engine.Cols("auth", "sync_at").Update(simer)
+			break
 		}
 	}
 	return nil
