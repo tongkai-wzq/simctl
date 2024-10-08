@@ -61,6 +61,7 @@ func (t *Telecom) post(uri string, data map[string]any, resp any) error {
 }
 
 // status auth flowOn
+// ：1：可激活2：测试激活3：测试去激活4：在用5：停机6：运营商管理状态
 func (t *Telecom) QryStsMore(simer Simer) error {
 	data := map[string]any{
 		"access_number": simer.GetMsisdn(),

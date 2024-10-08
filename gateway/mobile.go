@@ -64,6 +64,7 @@ func (m *Mobile) post(uri string, data map[string]any, resp any) error {
 	return nil
 }
 
+// 1：待激活 2：已激活 4：停机 6：可测试 7：库存 8：预销户
 func (m *Mobile) QrySts(simer Simer) error {
 	data := map[string]any{
 		"iccid": simer.GetIccid(),

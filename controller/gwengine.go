@@ -18,7 +18,7 @@ type GatewayEngine struct {
 }
 
 func (ge *GatewayEngine) GetSims() []model.Sim {
-	sims := make([]model.Sim, 0)
+	sims := make([]model.Sim, 0, 10)
 	if db.Engine.Where("gwuser_id = ? AND id > ?", ge.gwUser.Id, ge.lastId).OrderBy("id").Limit(10).Find(&sims); len(sims) > 0 {
 		ge.lastId = sims[len(sims)-1].Id
 	} else {

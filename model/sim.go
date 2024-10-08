@@ -146,7 +146,7 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 	case *gateway.Mobile:
 		if packet == nil && s.Status == 2 && s.FlowOn == 1 {
 			go Gateway.SwtFlowOn(s, 0)
-		} else if packet != nil && s.FlowOn == 0 {
+		} else if packet != nil && s.Status == 2 && s.FlowOn == 0 {
 			go Gateway.SwtFlowOn(s, 1)
 		} else if s.Auth {
 			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour {
@@ -163,7 +163,7 @@ func (s *Sim) QryInit() ([]string, bool, *int64, *Packet) {
 	case *gateway.Telecom:
 		if packet == nil && s.Status == 4 && s.FlowOn == 1 {
 			go Gateway.SwtFlowOn(s, 0)
-		} else if packet != nil && s.FlowOn == 0 {
+		} else if packet != nil && s.Status == 4 && s.FlowOn == 0 {
 			go Gateway.SwtFlowOn(s, 1)
 		} else if s.Auth {
 			if s.SyncAt == nil || time.Since(*s.SyncAt) > 24*time.Hour {

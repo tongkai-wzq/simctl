@@ -66,6 +66,7 @@ func (u *Unicom) ChgLfcy(simer Simer, status int8) error {
 	return nil
 }
 
+// SIM卡状态: “”0””:可测试,””1””: 可激活,””2””:已激活,””3””:已停用, “”4””:已失效,””5””””:已清除,””6””:已更换, “”7””:库存, “”8””:开始,“”9””:预清除
 func (u *Unicom) chgAttr(simer Simer, changeType string, targetValue string) error {
 	data := map[string]any{
 		"asynchronous": "0",
