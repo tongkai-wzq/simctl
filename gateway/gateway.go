@@ -56,9 +56,9 @@ func (gw *gateway) SetGwUser(gwUser GwUserer) {
 	gw.gwUser = gwUser
 }
 
-func (gw *gateway) IsCycleNear(gateway GateWayer) bool {
+func (gw *gateway) IsCycleNear(cc GateWayer) bool {
 	now := time.Now()
-	switch gateway.(type) {
+	switch cc.(type) {
 	case *Unicom:
 		if now.Day() == 27 && now.Hour() == 0 && now.Minute() < 15 {
 			return true
@@ -76,9 +76,9 @@ func (gw *gateway) IsCycleNear(gateway GateWayer) bool {
 	return false
 }
 
-func (gw *gateway) IsCurtCycle(gateway GateWayer, at time.Time) bool {
+func (gw *gateway) IsCurtCycle(cc GateWayer, at time.Time) bool {
 	now := time.Now()
-	switch gateway.(type) {
+	switch cc.(type) {
 	case *Unicom:
 		if now.Day() < 27 && at.Day() < 27 && now.Month() == at.Month() {
 			return true

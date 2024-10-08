@@ -27,11 +27,11 @@ type Unicom struct {
 
 func (u *Unicom) getParams() map[string]any {
 	now := time.Now()
-	msec := strconv.Itoa(now.Nanosecond() / 1000000)
-	transId := fmt.Sprintf("%v%v%v", now.Format("20060102150405"), msec, strconv.Itoa(rand.New(rand.NewSource(now.UnixNano())).Intn(900000)+100000))
+	msec := now.Format(".000")
+	transId := fmt.Sprintf("%v%v%v", now.Format("20060102150405"), msec[1:], strconv.Itoa(rand.New(rand.NewSource(now.UnixNano())).Intn(900000)+100000))
 	params := map[string]any{
 		"app_id":    u.AppId,
-		"timestamp": fmt.Sprintf("%v %v", now.Format("2006-01-02 15:04:05"), msec),
+		"timestamp": fmt.Sprintf("%v %v", now.Format("2006-01-02 15:04:05"), msec[1:]),
 		"trans_id":  transId,
 	}
 	var paramsStr string
