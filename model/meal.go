@@ -23,7 +23,7 @@ type Group struct {
 
 func (g *Group) LoadMeals() {
 	g.Meals = make([]*Meal, 0, 30)
-	db.Engine.Where("group_id", g.Id).Find(g.Meals)
+	db.Engine.Where("group_id = ?", g.Id).Find(&g.Meals)
 }
 
 func (g *Group) GetSaleMeals() []*SaleMeal {

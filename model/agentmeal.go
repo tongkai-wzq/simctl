@@ -23,10 +23,10 @@ func (ag *AgentGroup) LoadGroup() {
 
 func (ag *AgentGroup) LoadAgentMeals() {
 	mealIds := make([]int64, 0, 30)
-	db.Engine.Table("meal").Where("group_id", ag.GroupId).Cols("id").Find(&mealIds)
+	db.Engine.Table("meal").Where("group_id = ?", ag.GroupId).Cols("id").Find(&mealIds)
 	cond := builder.Eq{"agent_id": ag.AgentId}.And(builder.In("meal_id", mealIds))
 	ag.AgentMeals = make([]*AgentMeal, 0, 30)
-	db.Engine.Where(cond).Find(ag.AgentMeals)
+	db.Engine.Where(cond).Find(&ag.AgentMeals)
 }
 
 func (ag *AgentGroup) AttachPrice(saleMeals []*SaleMeal) []*SaleMeal {
