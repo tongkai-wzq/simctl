@@ -60,43 +60,46 @@ func (o *Order) GetRbtPca() float64 {
 }
 
 func (o *Order) GiveRbt() error {
-	var agentGroup AgentGroup
-	if has, err := db.Engine.Where("agent_id = ? AND group_id = ?", o.Agent.Id, o.Sim.GroupId).Get(&agentGroup); err == nil && !has {
-		return errors.New("未分配此套餐组")
-	} else {
-		if !agentGroup.Rebates {
-			return errors.New("no rebates")
-		}
-	}
 	var agent, subAgent *Agent
 	agent = o.Agent
 	for {
 		var agtMeal, subAgtMeal AgentMeal
 		var amount float64
-		if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", agent.Id, o.MealId).Get(&agtMeal); err == nil && !has {
-			return errors.New("agentMeal no found")
-		}
-		if subAgent == nil {
-			if agtMeal.Price > 0 {
-				amount = (agtMeal.Price - agtMeal.StlPrice) * o.GetRbtPca()
-			} else {
-				amount = (o.Price - agtMeal.StlPrice) * o.GetRbtPca()
-			}
-		} else {
-			if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", subAgent.Id, o.MealId).Get(&subAgtMeal); err != nil || !has {
+		var agentGroup AgentGroup
+		if has, err := db.Engine.Where("agent_id = ? AND group_id = ?", agent.Id, o.Sim.GroupId).Get(&agentGroup); err == nil && !has {
+			return errors.New("未分配此套餐组")
+		} else if err != nil {
+			return err
+		} else if agentGroup.Rebates {
+			if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", agent.Id, o.MealId).Get(&agtMeal); err == nil && !has {
 				return errors.New("agentMeal no found")
+			} else if err != nil {
+				return err
 			}
-			amount = (subAgtMeal.StlPrice - agtMeal.StlPrice) * o.GetRbtPca()
-		}
-		if amount > 0 {
-			o.Rebates = append(o.Rebates, &Rebates{
-				AgentId: agent.Id,
-				Agent:   agent,
-				OrderId: o.Id,
-				Order:   o,
-				Amount:  amount,
-				Status:  0,
-			})
+			if subAgent == nil {
+				if agtMeal.Price > 0 {
+					amount = (agtMeal.Price - agtMeal.StlPrice) * o.GetRbtPca()
+				} else {
+					amount = (o.Price - agtMeal.StlPrice) * o.GetRbtPca()
+				}
+			} else {
+				if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", subAgent.Id, o.MealId).Get(&subAgtMeal); err == nil && !has {
+					return errors.New("agentMeal no found")
+				} else if err != nil {
+					return err
+				}
+				amount = (subAgtMeal.StlPrice - agtMeal.StlPrice) * o.GetRbtPca()
+			}
+			if amount > 0 {
+				o.Rebates = append(o.Rebates, &Rebates{
+					AgentId: agent.Id,
+					Agent:   agent,
+					OrderId: o.Id,
+					Order:   o,
+					Amount:  amount,
+					Status:  0,
+				})
+			}
 		}
 		if agent.SuperiorId > 0 {
 			agent.LoadSuperior()
