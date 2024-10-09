@@ -11,7 +11,7 @@ import (
 
 type Sim struct {
 	Id       int64        `json:"id"`
-	GwuserId int64        ` json:"gwuserId"`
+	GwuserId int64        `json:"gwuserId"`
 	GwUser   *GatewayUser `xorm:"-" json:"gwUser"`
 	AgentId  int64        `json:"agentId"`
 	Agent    *Agent       `xorm:"-" json:"agent"`

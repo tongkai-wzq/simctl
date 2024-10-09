@@ -16,6 +16,7 @@ func main() {
 	}
 	db.Engine.Iterate(new(model.GatewayUser), func(i int, bean interface{}) error {
 		gwUser := bean.(*model.GatewayUser)
+		gwUser.LoadGateWay()
 		model.GatewayUsers[gwUser.Id] = gwUser
 		return nil
 	})
