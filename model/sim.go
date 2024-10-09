@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"simctl/db"
 	"simctl/gateway"
 	"time"
@@ -113,17 +114,19 @@ func (s *Sim) GetPacket() *Packet {
 	return nil
 }
 
-func (s *Sim) PreSaleMeals() []*SaleMeal {
+func (s *Sim) PreSaleMeals() ([]*SaleMeal, error) {
 	s.Group.LoadMeals()
 	saleMeals := s.Group.GetSaleMeals()
 	saleMeals = s.onceRemove(saleMeals)
 	if s.AgentId > 0 {
 		var agentGroup AgentGroup
 		if has, err := db.Engine.Where("agent_id = ? AND group_id = ?", s.AgentId, s.GroupId).Get(&agentGroup); err == nil && has {
-			agentGroup.LoadAgentMeals()
-			saleMeals = agentGroup.AttachPrice(saleMeals)
+			if agentGroup.Rebates {
+				agentGroup.LoadAgentMeals()
+				saleMeals = agentGroup.AttachPrice(saleMeals)
+			}
 		} else {
-			return nil
+			return nil, errors.New("未代理此套餐")
 		}
 	}
 	baseExpiredAt := s.GetBaseExpired()
@@ -134,7 +137,7 @@ func (s *Sim) PreSaleMeals() []*SaleMeal {
 			saleMeal.AcMthAble = true
 		}
 	}
-	return saleMeals
+	return saleMeals, nil
 }
 
 func (s *Sim) onceRemove(saleMeals []*SaleMeal) []*SaleMeal {

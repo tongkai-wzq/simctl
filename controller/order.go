@@ -87,8 +87,13 @@ func (b *Buy) OnInit(bMsg []byte) {
 	iResp.MapNber = sim.MapNber
 	iResp.Handle = "init"
 	sim.LoadGroup()
-	b.saleMeals = sim.PreSaleMeals()
-	iResp.SaleMeals = b.saleMeals
+	if saleMeals, err := sim.PreSaleMeals(); err == nil {
+		b.saleMeals = saleMeals
+		iResp.SaleMeals = b.saleMeals
+	} else {
+		iResp.Code = 4004
+		iResp.Msg = err.Error()
+	}
 	if data, err := json.Marshal(&iResp); err == nil {
 		b.Conn.WriteMessage(websocket.TextMessage, data)
 	}
