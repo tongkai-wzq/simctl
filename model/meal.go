@@ -1,10 +1,45 @@
 package model
 
-import "time"
+import (
+	"simctl/db"
+	"time"
+)
+
+type SaleMeal struct {
+	MealId      int64   `json:"mealId"`
+	Title       string  `json:"title"`
+	Base        bool    `json:"base"`
+	AcrossMonth bool    `json:"acrossMonth"`
+	Price       float64 `json:"price"`
+	Once        bool    `json:"once"`
+	AcMthAble   bool    `json:"acMthAble"`
+}
 
 type Group struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
+	Id    int64   `json:"id"`
+	Name  string  `json:"name"`
+	Meals []*Meal `xorm:"-" json:"meals"`
+}
+
+func (g *Group) LoadMeals() {
+	g.Meals = make([]*Meal, 0, 30)
+	db.Engine.Where("group_id", g.Id).Find(g.Meals)
+}
+
+func (g *Group) GetSaleMeals() []*SaleMeal {
+	var saleMeals []*SaleMeal
+	for _, meal := range g.Meals {
+		saleMeal := SaleMeal{
+			MealId:      meal.Id,
+			Title:       meal.Title,
+			Base:        meal.Base,
+			AcrossMonth: meal.AcrossMonth,
+			Price:       meal.Price,
+			Once:        meal.Once,
+		}
+		saleMeals = append(saleMeals, &saleMeal)
+	}
+	return saleMeals
 }
 
 type Meal struct {
@@ -20,6 +55,11 @@ type Meal struct {
 	Mb          int64   `json:"Mb"`
 	MbCft       float64 `json:"mbCft"`
 	Once        bool    `json:"once"`
+}
+
+func (m *Meal) LoadGroup() {
+	m.Group = new(Group)
+	db.Engine.ID(m.GroupId).Get(m.Group)
 }
 
 func (m *Meal) GetBeginAt(baseExpiredAt *time.Time, nextMonth bool) time.Time {

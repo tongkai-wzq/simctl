@@ -86,6 +86,7 @@ func (b *Buy) OnInit(bMsg []byte) {
 	iResp.Msisdn = sim.Msisdn
 	iResp.MapNber = sim.MapNber
 	iResp.Handle = "init"
+	sim.LoadGroup()
 	b.saleMeals = sim.PreSaleMeals()
 	iResp.SaleMeals = b.saleMeals
 	if data, err := json.Marshal(&iResp); err == nil {
