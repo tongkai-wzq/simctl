@@ -17,8 +17,8 @@ type simDetail struct {
 
 func Sim(w http.ResponseWriter, r *http.Request) {
 	var cond builder.Cond
-	if simNber := r.URL.Query().Get("simNber"); simNber != "" {
-		cond = builder.Eq{"iccid": simNber}.Or(builder.Eq{"msisdn": simNber}).Or(builder.Eq{"map_nber": simNber})
+	if nber := r.URL.Query().Get("nber"); nber != "" {
+		cond = builder.Eq{"iccid": nber}.Or(builder.Eq{"msisdn": nber}).Or(builder.Eq{"map_nber": nber})
 	}
 	var sim model.Sim
 	if has, err := db.Engine.Where(cond).Get(&sim); err == nil && has {
