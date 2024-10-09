@@ -12,7 +12,7 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/profitsharing"
 )
 
-func Meals(w http.ResponseWriter, r *http.Request) {
+func Test(w http.ResponseWriter, r *http.Request) {
 	svc := profitsharing.ReceiversApiService{Client: wechat.PayClient}
 	resp, result, err := svc.AddReceiver(context.Background(),
 		profitsharing.AddReceiverRequest{

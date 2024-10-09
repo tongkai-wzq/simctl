@@ -15,7 +15,7 @@ func Reg() *chi.Mux {
 	route.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"*"},
 	}))
-	route.Get("/meals", controller.Meals)
+	route.Get("/test", controller.Test)
 	route.Post("/payNotify", controller.PayNotify)
 	route.Post("/userLogin", controller.UserLogin)
 	route.Group(func(route chi.Router) {
