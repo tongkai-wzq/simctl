@@ -15,6 +15,9 @@ type simDtl struct {
 	Msisdn   string `json:"msisdn"`
 	MapNber  string `json:"mapNber"`
 	Operator string `json:"operator"`
+	Auth     bool   `json:"auth"`
+	FlowOn   int8   `json:"flowOn"`
+	Status   int8   `json:"status"`
 }
 
 func Sim(w http.ResponseWriter, r *http.Request) {

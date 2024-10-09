@@ -80,9 +80,13 @@ func (b *Buy) OnInit(bMsg []byte) {
 	b.order.LoadAgent()
 	buyWidgets[b.order.OutTradeNo] = b
 	var iResp buyInitResp
+	iResp.Id = sim.Id
 	iResp.Iccid = sim.Iccid
 	iResp.Msisdn = sim.Msisdn
 	iResp.MapNber = sim.MapNber
+	iResp.Auth = sim.Auth
+	iResp.FlowOn = sim.FlowOn
+	iResp.Status = sim.Status
 	iResp.Operator = sim.GetGwUser().Operator
 	iResp.Handle = "init"
 	sim.LoadGroup()
