@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"log"
 	"simctl/db"
 	"simctl/wechat"
 
@@ -37,5 +38,7 @@ func (r *Rebates) ToAccount() {
 	if err == nil {
 		r.Status = 1
 		db.Engine.Cols("status").Update(r)
+	} else {
+		log.Printf("%v %v %v \n", r.Order.OutTradeNo, r.Agent.Name, err.Error())
 	}
 }

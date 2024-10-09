@@ -22,7 +22,7 @@ type Meal struct {
 	Once        bool    `json:"once"`
 }
 
-func (m *Meal) RsvBeginAt(baseExpiredAt *time.Time, nextMonth bool) time.Time {
+func (m *Meal) GetBeginAt(baseExpiredAt *time.Time, nextMonth bool) time.Time {
 	now := time.Now()
 	next := now.AddDate(0, 1, -now.Day()+1).Add(-time.Duration(now.Hour()) * time.Hour).Add(-time.Duration(now.Minute()) * time.Minute).Add(-time.Duration(now.Second()) * time.Second)
 	nOrN := func() time.Time {
@@ -45,38 +45,32 @@ func (m *Meal) RsvBeginAt(baseExpiredAt *time.Time, nextMonth bool) time.Time {
 	}
 }
 
-func (m *Meal) AgtPackets(startAt time.Time) []Packet {
-	var packets []Packet
+func (m *Meal) AlignPackets(startAt time.Time) []*Packet {
+	var packets []*Packet
+	packet := Packet{
+		StartAt: startAt,
+		Base:    m.Base,
+		Kb:      m.Mb * 1024,
+		KbCft:   m.MbCft,
+	}
 	if m.Base {
-		packet := Packet{
-			StartAt: startAt,
-			Base:    m.Base,
-			Kb:      m.Mb * 1024,
-			KbCft:   m.MbCft,
-		}
-		for i := 0; i < int(m.MonthNber); i++ {
-			if i == 0 {
+		for i := 1; i <= int(m.MonthNber); i++ {
+			if i == 1 {
 				packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, false)
 			} else {
 				packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, true)
 			}
-			packets = append(packets, packet)
+			packets = append(packets, &packet)
 			packet.StartAt = packet.ExpiredAt.Add(time.Second)
 		}
 		return packets
 	} else {
-		packet := Packet{
-			StartAt: startAt,
-			Base:    m.Base,
-			Kb:      m.Mb * 1024,
-			KbCft:   m.MbCft,
-		}
 		if m.Day > 0 {
 			packet.ExpiredAt = packet.StartAt.AddDate(0, 0, int(m.Day))
 		} else {
 			packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, false)
 		}
-		packets = append(packets, packet)
+		packets = append(packets, &packet)
 		return packets
 	}
 }

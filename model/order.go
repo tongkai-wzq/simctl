@@ -40,10 +40,10 @@ func (o *Order) LoadMeal() {
 
 func (o *Order) PrePackets() []*Packet {
 	o.Packets = nil
-	beginAt := o.Meal.RsvBeginAt(o.Sim.GetBaseExpired(), o.NextMonth)
-	for _, packet := range o.Meal.AgtPackets(beginAt) {
+	beginAt := o.Meal.GetBeginAt(o.Sim.GetBaseExpired(), o.NextMonth)
+	for _, packet := range o.Meal.AlignPackets(beginAt) {
 		packet.SimId = o.SimId
-		o.Packets = append(o.Packets, &packet)
+		o.Packets = append(o.Packets, packet)
 	}
 	return o.Packets
 }
