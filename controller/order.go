@@ -59,9 +59,7 @@ type buyInitMsg struct {
 
 type buyInitResp struct {
 	message
-	Iccid     string            `json:"iccid"`
-	Msisdn    string            `json:"msisdn"`
-	MapNber   string            `json:"mapNber"`
+	simDtl
 	SaleMeals []*model.SaleMeal `json:"saleMeals"`
 }
 
@@ -85,6 +83,7 @@ func (b *Buy) OnInit(bMsg []byte) {
 	iResp.Iccid = sim.Iccid
 	iResp.Msisdn = sim.Msisdn
 	iResp.MapNber = sim.MapNber
+	iResp.Operator = sim.GetGwUser().Operator
 	iResp.Handle = "init"
 	sim.LoadGroup()
 	if saleMeals, err := sim.PreSaleMeals(); err == nil {
