@@ -55,11 +55,11 @@ func (m *Meal) AlignPackets(startAt time.Time) []*Packet {
 	}
 	if m.Base {
 		for i := 1; i <= int(m.MonthNber); i++ {
+			var first bool
 			if i == 1 {
-				packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, false)
-			} else {
-				packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, true)
+				first = true
 			}
+			packet.ExpiredAt = m.getExpiredAt(packet.StartAt, first)
 			packets = append(packets, &packet)
 			packet.StartAt = packet.ExpiredAt.Add(time.Second)
 		}
@@ -68,20 +68,17 @@ func (m *Meal) AlignPackets(startAt time.Time) []*Packet {
 		if m.Day > 0 {
 			packet.ExpiredAt = packet.StartAt.AddDate(0, 0, int(m.Day))
 		} else {
-			packet.ExpiredAt = m.rsvCcExpiredAt(packet.StartAt, false)
+			packet.ExpiredAt = m.getExpiredAt(packet.StartAt, true)
 		}
 		packets = append(packets, &packet)
 		return packets
 	}
 }
 
-func (m *Meal) rsvCcExpiredAt(startAt time.Time, ccNext bool) time.Time {
-	var expiredAt time.Time
-	if m.AcrossMonth {
-		expiredAt = startAt.AddDate(0, 1, 0)
-	} else {
-		expiredAt = startAt.AddDate(0, 1, 0)
-		if !ccNext {
+func (m *Meal) getExpiredAt(startAt time.Time, first bool) time.Time {
+	expiredAt := startAt.AddDate(0, 1, 0)
+	if !m.AcrossMonth {
+		if first {
 			expiredAt = expiredAt.AddDate(0, 0, -expiredAt.Day()+1)
 			expiredAt = expiredAt.Add(-time.Duration(expiredAt.Hour()) * time.Hour).Add(-time.Duration(expiredAt.Minute()) * time.Minute).Add(-time.Duration(expiredAt.Second()) * time.Second)
 		}
