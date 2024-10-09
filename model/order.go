@@ -90,16 +90,14 @@ func (o *Order) GiveRbt() error {
 				}
 				amount = (subAgtMeal.StlPrice - agtMeal.StlPrice) * o.GetRbtPca()
 			}
-			if amount > 0 {
-				o.Rebates = append(o.Rebates, &Rebates{
-					AgentId: agent.Id,
-					Agent:   agent,
-					OrderId: o.Id,
-					Order:   o,
-					Amount:  amount,
-					Status:  0,
-				})
-			}
+			o.Rebates = append(o.Rebates, &Rebates{
+				AgentId: agent.Id,
+				Agent:   agent,
+				OrderId: o.Id,
+				Order:   o,
+				Amount:  amount,
+				Status:  0,
+			})
 		}
 		if agent.SuperiorId > 0 {
 			agent.LoadSuperior()
