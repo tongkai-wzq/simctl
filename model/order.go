@@ -60,12 +60,20 @@ func (o *Order) GetRbtPca() float64 {
 }
 
 func (o *Order) GiveRbt() error {
+	var agentGroup AgentGroup
+	if has, err := db.Engine.Where("agent_id = ? AND group_id = ?", o.Agent.Id, o.Sim.GroupId).Get(&agentGroup); err == nil && !has {
+		return errors.New("未分配此套餐组")
+	} else {
+		if !agentGroup.Rebates {
+			return errors.New("no rebates")
+		}
+	}
 	var agent, subAgent *Agent
 	agent = o.Agent
 	for {
 		var agtMeal, subAgtMeal AgentMeal
 		var amount float64
-		if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", agent.Id, o.MealId).Get(&agtMeal); err != nil || !has {
+		if has, err := db.Engine.Where("agent_id = ? AND meal_id = ?", agent.Id, o.MealId).Get(&agtMeal); err == nil && !has {
 			return errors.New("agentMeal no found")
 		}
 		if subAgent == nil {
@@ -81,15 +89,14 @@ func (o *Order) GiveRbt() error {
 			amount = (subAgtMeal.StlPrice - agtMeal.StlPrice) * o.GetRbtPca()
 		}
 		if amount > 0 {
-			rebate := Rebates{
+			o.Rebates = append(o.Rebates, &Rebates{
 				AgentId: agent.Id,
 				Agent:   agent,
 				OrderId: o.Id,
 				Order:   o,
 				Amount:  amount,
 				Status:  0,
-			}
-			o.Rebates = append(o.Rebates, &rebate)
+			})
 		}
 		if agent.SuperiorId > 0 {
 			agent.LoadSuperior()
@@ -99,10 +106,12 @@ func (o *Order) GiveRbt() error {
 			break
 		}
 	}
-	for _, rebate := range o.Rebates {
-		db.Engine.Insert(rebate)
+	if len(o.Rebates) > 0 {
+		for _, rebate := range o.Rebates {
+			db.Engine.Insert(rebate)
+		}
+		go o.RbtToAccount()
 	}
-	go o.RbtToAccount()
 	return nil
 }
 
