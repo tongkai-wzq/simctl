@@ -82,13 +82,13 @@ func (o *Order) GiveRbt() error {
 		}
 		if amount > 0 {
 			rebate := Rebates{
-				Amount: amount,
-				Status: 0,
+				AgentId: agent.Id,
+				Agent:   agent,
+				OrderId: o.Id,
+				Order:   o,
+				Amount:  amount,
+				Status:  0,
 			}
-			rebate.AgentId = o.AgentId
-			rebate.Agent = o.Agent
-			rebate.OrderId = o.Id
-			rebate.Order = o
 			o.Rebates = append(o.Rebates, &rebate)
 		}
 		if agent.SuperiorId > 0 {
