@@ -2,13 +2,8 @@ package model
 
 import (
 	"errors"
-	"fmt"
 	"simctl/db"
-	"simctl/wechat"
 	"time"
-
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/profitsharing"
 )
 
 type Order struct {
@@ -23,13 +18,14 @@ type Order struct {
 	UserId        int64
 	User          *User `xorm:"-" json:"user"`
 	MealId        int64
-	Meal          *Meal     `xorm:"-" json:"meal"`
-	NextMonth     bool      `json:"nextMonth"`
-	Price         float64   `json:"price"`
-	Amount        float64   `json:"amount"`
-	RefundAmt     float64   `json:"refundAmt"`
-	Packets       []*Packet `xorm:"-" json:"-"`
-	Status        int8      `json:"status"`
+	Meal          *Meal      `xorm:"-" json:"meal"`
+	NextMonth     bool       `json:"nextMonth"`
+	Price         float64    `json:"price"`
+	Amount        float64    `json:"amount"`
+	RefundAmt     float64    `json:"refundAmt"`
+	Packets       []*Packet  `xorm:"-" json:"-"`
+	Rebates       []*Rebates `xorm:"-" json:"-"`
+	Status        int8       `json:"status"`
 }
 
 func (o *Order) LoadAgent() {
@@ -64,7 +60,6 @@ func (o *Order) GetRbtPca() float64 {
 }
 
 func (o *Order) GiveRbt() error {
-	var rebates []*Rebates
 	var agent, subAgent *Agent
 	agent = o.Agent
 	for {
@@ -94,7 +89,7 @@ func (o *Order) GiveRbt() error {
 			rebate.Agent = o.Agent
 			rebate.OrderId = o.Id
 			rebate.Order = o
-			rebates = append(rebates, &rebate)
+			o.Rebates = append(o.Rebates, &rebate)
 		}
 		if agent.SuperiorId > 0 {
 			agent.LoadSuperior()
@@ -104,30 +99,16 @@ func (o *Order) GiveRbt() error {
 			break
 		}
 	}
-	var receivers []profitsharing.CreateOrderReceiver
-	for _, rebate := range rebates {
+	for _, rebate := range o.Rebates {
 		db.Engine.Insert(rebate)
-		receivers = append(receivers, profitsharing.CreateOrderReceiver{
-			Account:     core.String(rebate.Agent.Openid),
-			Amount:      core.Int64(int64(rebate.Amount * 100)),
-			Description: core.String(fmt.Sprintf("%v返佣", rebate.Order.OutTradeNo)),
-			Type:        core.String("PERSONAL_OPENID"),
-		})
 	}
-	go func() {
-		time.Sleep(15 * time.Second)
-		err := wechat.ProfitSharing(profitsharing.CreateOrderRequest{
-			OutOrderNo:      core.String(fmt.Sprintf("%v-S", o.OutTradeNo)),
-			Receivers:       receivers,
-			TransactionId:   core.String(o.TransactionId),
-			UnfreezeUnsplit: core.Bool(true),
-		})
-		if err == nil {
-			for _, rebate := range rebates {
-				rebate.Status = 1
-				db.Engine.Cols("status").Update(rebate)
-			}
-		}
-	}()
+	go o.RbtToAccount()
 	return nil
+}
+
+func (o *Order) RbtToAccount() {
+	time.Sleep(15 * time.Second)
+	for _, rebate := range o.Rebates {
+		rebate.ToAccount()
+	}
 }
