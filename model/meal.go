@@ -100,7 +100,8 @@ func (m *Meal) AlignPackets(startAt time.Time) []*Packet {
 				first = true
 			}
 			packet.ExpiredAt = m.getExpiredAt(packet.StartAt, first)
-			packets = append(packets, &packet)
+			newPacket := packet
+			packets = append(packets, &newPacket)
 			packet.StartAt = packet.ExpiredAt.Add(time.Second)
 		}
 		return packets
