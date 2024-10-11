@@ -151,7 +151,12 @@ type unifyResp struct {
 }
 
 func (b *Buy) OnUnify(bMsg []byte) {
-	resp, err := wechat.Prepay(jsapi.PrepayRequest{
+	if b.order.Status == 0 && b.prepay != nil {
+		wechat.CloseOrder(b.order.OutTradeNo)
+	}
+	var uResp unifyResp
+	uResp.Handle = "unify"
+	if resp, err := wechat.Prepay(jsapi.PrepayRequest{
 		Description: core.String(regexp.MustCompile(`[^\w\p{Han}]+`).ReplaceAllString(b.order.Title, "")),
 		OutTradeNo:  core.String(b.order.OutTradeNo),
 		Attach:      core.String(fmt.Sprintf("原价%v", b.order.Price)),
@@ -165,12 +170,9 @@ func (b *Buy) OnUnify(bMsg []byte) {
 		SettleInfo: &jsapi.SettleInfo{
 			ProfitSharing: core.Bool(true),
 		},
-	})
-	var uResp unifyResp
-	uResp.Handle = "unify"
-	if err == nil {
+	}); err == nil {
 		b.prepay = resp
-		uResp.Data = resp
+		uResp.Data = b.prepay
 	} else {
 		uResp.Code = 4002
 		uResp.Msg = err.Error()

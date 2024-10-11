@@ -51,8 +51,8 @@ func (o *Order) PrePackets() []*Packet {
 func (o *Order) SavePackets() {
 	for _, packet := range o.Packets {
 		packet.OrderId = o.Id
+		db.Engine.Insert(packet)
 	}
-	db.Engine.Insert(o.Packets)
 }
 
 func (o *Order) GetRbtPca() float64 {
