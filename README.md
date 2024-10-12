@@ -19,7 +19,20 @@ model/ 模型层代码
 
 #### 套餐订购模块
 
-采用websocket通信
+路径 /controller/order.go
+
+采用websocket通信,我们来看看这个struct
+
+```
+type Buy struct {
+	widget
+	user      *model.User
+	saleMeals []*model.SaleMeal
+	order     *model.Order
+	prepay    *jsapi.PrepayWithRequestPaymentResponse
+}
+```
+
 
 
 联系开发者 微信号 wuzhiqiang-dev
