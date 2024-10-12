@@ -33,7 +33,7 @@ type Buy struct {
 }
 ```
 首选 saleMeals 可销售套餐
-订单未支付前不会保存到数据库
+订单未支付前不会保存到数据库,先计算出流量包对象显示，保存
 
 
 联系开发者 微信号 wuzhiqiang-dev
