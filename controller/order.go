@@ -58,6 +58,7 @@ type buyInitMsg struct {
 }
 
 type buyInitResp struct {
+	OutTradeNo string `json:"outTradeNo"`
 	message
 	simDtl
 	SaleMeals []*model.SaleMeal `json:"saleMeals"`
@@ -80,6 +81,7 @@ func (b *Buy) OnInit(bMsg []byte) {
 	b.order.LoadAgent()
 	buyWidgets[b.order.OutTradeNo] = b
 	var iResp buyInitResp
+	iResp.OutTradeNo = b.order.OutTradeNo
 	iResp.Id = sim.Id
 	iResp.Iccid = sim.Iccid
 	iResp.Msisdn = sim.Msisdn
