@@ -21,7 +21,7 @@ model/ 模型层代码
 
 路径 /controller/order.go
 
-采用websocket通信,我们来看看这个struct
+前后端采用websocket通信,我们来看看这个struct
 
 ```
 type Buy struct {
@@ -32,7 +32,8 @@ type Buy struct {
 	prepay    *jsapi.PrepayWithRequestPaymentResponse
 }
 ```
-
+首选 saleMeals 可销售套餐
+订单未支付前不会保存到数据库
 
 
 联系开发者 微信号 wuzhiqiang-dev
