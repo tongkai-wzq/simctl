@@ -21,7 +21,7 @@ model/ 模型层代码
 
 路径 /controller/order.go
 
-前后端采用websocket通信,我们来看看这个struct
+前后端采用websocket通信,我们来看看这个struct，这个buy的状态和前端页面对应
 
 ```
 type Buy struct {
