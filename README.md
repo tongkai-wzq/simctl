@@ -19,7 +19,7 @@ model/ 模型层代码
 
 #### 套餐订购模块
 
-
+采用websocket通信
 
 
 联系开发者 微信号 wuzhiqiang-dev
