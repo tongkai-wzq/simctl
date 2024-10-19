@@ -13,11 +13,27 @@
 #### 目录结构
 model/ 模型层代码
 
+#### 前端概览
 | ![输入图片说明](doc/image/1.jpg) | ![输入图片说明](doc/image/2.jpg) | ![输入图片说明](doc/image/3.jpg) |
 |----|----|----|
 
+#### 套餐订购模块
 
+路径 /controller/order.go
 
+前后端采用websocket通信,我们来看看这个struct，这个buy的状态和前端页面对应
+
+```
+type Buy struct {
+	widget
+	user      *model.User
+	saleMeals []*model.SaleMeal
+	order     *model.Order
+	prepay    *jsapi.PrepayWithRequestPaymentResponse
+}
+```
+首选 saleMeals 可销售套餐
+订单未支付前不会保存到数据库,先计算出流量包对象显示，保存
 
 
 联系开发者 微信号 wuzhiqiang-dev
