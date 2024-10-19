@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"simctl/db"
 	"simctl/model"
-	"strings"
 	"time"
 
 	"github.com/go-chi/jwtauth/v5"
@@ -17,7 +16,7 @@ var upgrader websocket.Upgrader
 
 func init() {
 	upgrader = websocket.Upgrader{
-		HandshakeTimeout: time.Second * 10,
+		HandshakeTimeout: time.Second * 15,
 		ReadBufferSize:   1024,
 		WriteBufferSize:  1024,
 		CheckOrigin: func(r *http.Request) bool {
@@ -26,14 +25,13 @@ func init() {
 	}
 }
 
-func AuthUser(w http.ResponseWriter, r *http.Request) *model.User {
+func AuthUser(r *http.Request) *model.User {
 	_, claims, _ := jwtauth.FromContext(r.Context())
 	var user model.User
-	if has, err := db.Engine.ID(int64(claims["userId"].(float64))).Get(&user); err != nil || !has {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return nil
+	if exist, err := db.Engine.ID(int64(claims["userId"].(float64))).Get(&user); err == nil || exist {
+		return &user
 	}
-	return &user
+	return nil
 }
 
 type message struct {
@@ -44,24 +42,31 @@ type message struct {
 
 type Widgeter interface {
 	GetHandleMap() map[string]func(bMsg []byte)
-	Close()
+	End()
 }
 
 type widget struct {
-	Conn *websocket.Conn
+	conn  *websocket.Conn
+	timer *time.Timer
 }
 
-func (w *widget) Run(cc Widgeter) {
-	go w.keep(cc)
+func (w *widget) Start(cc Widgeter, conn *websocket.Conn) {
+	if w.conn != nil {
+		w.conn.Close()
+	}
+	w.conn = conn
+	if w.timer == nil {
+		w.timer = time.AfterFunc(900*time.Second, func() {
+			cc.End()
+		})
+	}
 	for {
-		msgType, bMsg, err := w.Conn.ReadMessage()
+		msgType, bMsg, err := w.conn.ReadMessage()
 		if err != nil {
-			log.Println("websocket", err.Error(), msgType)
-			if !strings.Contains(err.Error(), "close") {
-				cc.Close()
-				w.Conn.Close()
-			}
+			log.Println("ReadMessage", err.Error(), msgType)
 			break
+		} else {
+			w.timer.Reset(900 * time.Second)
 		}
 		var msg message
 		json.Unmarshal(bMsg, &msg)
@@ -70,26 +75,6 @@ func (w *widget) Run(cc Widgeter) {
 				handle(bMsg)
 				break
 			}
-		}
-	}
-}
-
-func (w *widget) keep(cc Widgeter) {
-	w.Conn.SetReadDeadline(time.Now().Add(6 * time.Second))
-	w.Conn.SetPongHandler(func(appData string) error {
-		w.Conn.SetReadDeadline(time.Now().Add(6 * time.Second))
-		return nil
-	})
-	w.Conn.SetCloseHandler(func(code int, text string) error {
-		cc.Close()
-		w.Conn.Close()
-		log.Println("close handle", code, text)
-		return nil
-	})
-	for {
-		time.Sleep(3 * time.Second)
-		if err := w.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-			break
 		}
 	}
 }

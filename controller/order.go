@@ -23,18 +23,23 @@ import (
 var buyWidgets map[string]*Buy = make(map[string]*Buy)
 
 func NewBuy(w http.ResponseWriter, r *http.Request) {
-	var buy Buy
-	if user := AuthUser(w, r); user != nil {
-		buy.user = user
-	} else {
-		return
+	var (
+		buy   *Buy
+		exist bool
+	)
+	outTradeNo := r.URL.Query().Get("outTradeNo")
+	if buy, exist = buyWidgets[outTradeNo]; outTradeNo == "" || !exist {
+		buy = new(Buy)
+		if user := AuthUser(r); user != nil {
+			buy.user = user
+		} else {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 	}
 	if conn, err := upgrader.Upgrade(w, r, nil); err == nil {
-		buy.Conn = conn
-	} else {
-		return
+		buy.Start(buy, conn)
 	}
-	buy.Run(&buy)
 }
 
 type Buy struct {
@@ -100,7 +105,7 @@ func (b *Buy) OnInit(bMsg []byte) {
 		iResp.Msg = err.Error()
 	}
 	if data, err := json.Marshal(&iResp); err == nil {
-		b.Conn.WriteMessage(websocket.TextMessage, data)
+		b.conn.WriteMessage(websocket.TextMessage, data)
 	}
 }
 
@@ -143,7 +148,7 @@ func (b *Buy) OnSubmit(bMsg []byte) {
 		})
 	}
 	if data, err := json.Marshal(&sResp); err == nil {
-		b.Conn.WriteMessage(websocket.TextMessage, data)
+		b.conn.WriteMessage(websocket.TextMessage, data)
 	}
 }
 
@@ -180,7 +185,7 @@ func (b *Buy) OnUnify(bMsg []byte) {
 		uResp.Msg = err.Error()
 	}
 	if data, err := json.Marshal(&uResp); err == nil {
-		b.Conn.WriteMessage(websocket.TextMessage, data)
+		b.conn.WriteMessage(websocket.TextMessage, data)
 	}
 }
 
@@ -208,8 +213,7 @@ func PayNotify(w http.ResponseWriter, r *http.Request) {
 	w.Write(nil)
 }
 
-func (b *Buy) Close() {
-	time.Sleep(6 * time.Second)
+func (b *Buy) End() {
 	if b.order.Status == 0 && b.prepay != nil {
 		wechat.CloseOrder(b.order.OutTradeNo)
 	}
