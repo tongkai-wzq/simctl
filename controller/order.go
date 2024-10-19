@@ -38,7 +38,11 @@ func NewBuy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if conn, err := upgrader.Upgrade(w, r, nil); err == nil {
-		buy.Start(buy, conn)
+		buy.SetConn(conn)
+		if simId := r.URL.Query().Get("simId"); outTradeNo == "" && simId != "" {
+			go buy.init(simId)
+		}
+		buy.Read(buy)
 	}
 }
 
@@ -52,14 +56,9 @@ type Buy struct {
 
 func (b *Buy) GetHandleMap() map[string]func(bMsg []byte) {
 	return map[string]func(bMsg []byte){
-		"init":   b.OnInit,
 		"submit": b.OnSubmit,
 		"unify":  b.OnUnify,
 	}
-}
-
-type buyInitMsg struct {
-	SimId int64 `json:"simId"`
 }
 
 type buyInitResp struct {
@@ -69,11 +68,9 @@ type buyInitResp struct {
 	SaleMeals []*model.SaleMeal `json:"saleMeals"`
 }
 
-func (b *Buy) OnInit(bMsg []byte) {
-	var iMsg buyInitMsg
-	json.Unmarshal(bMsg, &iMsg)
+func (b *Buy) init(simId string) {
 	sim := new(model.Sim)
-	db.Engine.ID(iMsg.SimId).Get(sim)
+	db.Engine.ID(simId).Get(sim)
 	now := time.Now()
 	b.order = &model.Order{
 		OutTradeNo: fmt.Sprintf("F%v%v", now.Format("200601021504"), rand.New(rand.NewSource(now.UnixNano())).Intn(9000)+1000),

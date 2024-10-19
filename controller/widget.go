@@ -50,18 +50,22 @@ type widget struct {
 	timer *time.Timer
 }
 
-func (w *widget) Start(cc Widgeter, conn *websocket.Conn) {
+func (w *widget) SetConn(conn *websocket.Conn) {
 	if w.conn != nil {
 		w.conn.Close()
 	}
 	w.conn = conn
+}
+
+func (w *widget) Read(cc Widgeter) {
 	if w.timer == nil {
 		w.timer = time.AfterFunc(900*time.Second, func() {
 			cc.End()
 		})
 	}
+	conn := w.conn
 	for {
-		msgType, bMsg, err := w.conn.ReadMessage()
+		msgType, bMsg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("ReadMessage", err.Error(), msgType)
 			break
